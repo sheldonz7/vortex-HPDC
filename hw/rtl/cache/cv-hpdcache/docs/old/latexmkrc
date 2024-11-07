@@ -1,2 +1,0 @@
-$ENV{'TEXINPUTS'}=':source:source/images:source/images/exported:build:';
-$ENV{'BIBINPUTS'}=':source:';
