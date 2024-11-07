@@ -8,5 +8,5 @@
 	path = third_party/cvfpu
 	url = https://github.com/openhwgroup/cvfpu.git
 [submodule "hw/rtl/cache/cv-hpdcache"]
-	path = hw/rtl/cv-hpdcache
+	path = hw/rtl/cache/cv-hpdcache
 	url = https://github.com/openhwgroup/cv-hpdcache.git
