@@ -57,6 +57,7 @@ DEFAULTS() {
 parse_args() {
     DEFAULTS
     for i in "$@"; do
+        echo "Processing option: $i"
         case $i in
             --driver=*) DRIVER=${i#*=} ;;
             --app=*)    APP=${i#*=} ;;
@@ -64,6 +65,7 @@ parse_args() {
             --cores=*)  CONFIGS=$(add_option "$CONFIGS" "-DNUM_CORES=${i#*=}") ;;
             --warps=*)  CONFIGS=$(add_option "$CONFIGS" "-DNUM_WARPS=${i#*=}") ;;
             --threads=*) CONFIGS=$(add_option "$CONFIGS" "-DNUM_THREADS=${i#*=}") ;;
+            --hpdcache)  CONFIGS=$(add_option "$CONFIGS" "-DENABLE_HPDCACHE") ;;
             --l2cache)  CONFIGS=$(add_option "$CONFIGS" "-DL2_ENABLE") ;;
             --l3cache)  CONFIGS=$(add_option "$CONFIGS" "-DL3_ENABLE") ;;
             --perf=*)   CONFIGS=$(add_option "$CONFIGS" "-DPERF_ENABLE"); PERF_CLASS=${i#*=} ;;

@@ -67,7 +67,9 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
     parameter CORE_OUT_BUF          = 0,
 
     // Memory request output buffer
-    parameter MEM_OUT_BUF           = 0
+    parameter MEM_OUT_BUF           = 0,
+
+    parameter ENABLE_HPDCACHE       = 0
  ) (
 
     input wire clk,
@@ -176,7 +178,8 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .UUID_WIDTH   (UUID_WIDTH),
             .TAG_WIDTH    (TAG_WIDTH),
             .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
-            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
+            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF),
+            .ENABLE_HPDCACHE (ENABLE_HPDCACHE)
         ) cache (
             .clk            (clk),
             .reset          (reset),

@@ -33,6 +33,12 @@
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
+`ifdef ENABLE_HPDCACHE
+    `define ENABLE_HPDCACHE   1
+`else
+    `define ENABLE_HPDCACHE   0
+`endif
+
 `ifndef EXT_M_DISABLE
 `define EXT_M_ENABLE
 `endif
