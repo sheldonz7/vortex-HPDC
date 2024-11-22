@@ -160,27 +160,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_core_req_flags;
     wire [NUM_BANKS-1:0]                        per_bank_core_req_ready;
 
-    wire [NUM_BANKS-1:0]                        per_bank_core_rsp_valid;
-    wire [NUM_BANKS-1:0][`CS_WORD_WIDTH-1:0]    per_bank_core_rsp_data;
-    wire [NUM_BANKS-1:0][TAG_WIDTH-1:0]         per_bank_core_rsp_tag;
-    wire [NUM_BANKS-1:0][REQ_SEL_WIDTH-1:0]     per_bank_core_rsp_idx;
-    wire [NUM_BANKS-1:0]                        per_bank_core_rsp_ready;
-
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_valid;
-    wire [NUM_BANKS-1:0][`CS_MEM_ADDR_WIDTH-1:0] per_bank_mem_req_addr;
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_rw;
-    wire [NUM_BANKS-1:0][LINE_SIZE-1:0]         per_bank_mem_req_byteen;
-    wire [NUM_BANKS-1:0][`CS_LINE_WIDTH-1:0]    per_bank_mem_req_data;
-    wire [NUM_BANKS-1:0][BANK_MEM_TAG_WIDTH-1:0] per_bank_mem_req_tag;
-    wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_mem_req_flags;
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_ready;
-
-    wire [NUM_BANKS-1:0]                        per_bank_mem_rsp_ready;
-
-    assign per_bank_core_req_fire = per_bank_core_req_valid & per_bank_mem_req_ready;
-
-    assign mem_rsp_ready_s = per_bank_mem_rsp_ready[mem_rsp_bank_id];
-
     // Bank requests dispatch
 
     wire [NUM_REQS-1:0]                      core_req_valid;
@@ -413,7 +392,31 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         .rst_ni,
 
         .vx_mem_bus    (mem_bus_if),
+    
+        // _i suffix for hpdc input ports
+        // _o suffix for hpdc output ports
+        // this interface should give inputs to hpdc (output port)
+        //                       take outputs from hpdc (input port)
 
+        .mem_req_read_valid_o (dcache_read_ready),
+        .mem_req_read_ready_i (dcache_read_valid),
+        .mem_req_read_o (dcache_read),
+
+        .mem_resp_read_valid_i (dcache_read_resp_ready),
+        .mem_resp_read_ready_o (dcache_read_resp_valid),
+        .mem_resp_read_i (dcache_read_resp),
+
+        .mem_req_write_valid_o (dcache_write_ready),
+        .mem_req_write_ready_i (dcache_write_valid),
+        .mem_req_write_o (dcache_write),
+
+        .mem_req_write_data_valid_o (dcache_write_data_ready),
+        .mem_req_write_data_ready_i (dcache_write_data_valid),
+        .mem_req_write_data_o (dcache_write_data),
+
+        .mem_resp_write_valid_i (dcache_write_resp_ready),
+        .mem_resp_write_ready_o (dcache_write_resp_valid),
+        .mem_resp_write_i (dcache_write_resp),
     );
 
     hpdcache #(
@@ -528,46 +531,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_rsp_data_s
         assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
-    end
-
-    // Memory request arbitration
-
-    wire [NUM_BANKS-1:0][(`CS_MEM_ADDR_WIDTH + 1 + LINE_SIZE + `CS_LINE_WIDTH + BANK_MEM_TAG_WIDTH + `UP(FLAGS_WIDTH))-1:0] data_in;
-
-    for (genvar i = 0; i < NUM_BANKS; ++i) begin : g_data_in
-        assign data_in[i] = {
-            per_bank_mem_req_addr[i],
-            per_bank_mem_req_rw[i],
-            per_bank_mem_req_byteen[i],
-            per_bank_mem_req_data[i],
-            per_bank_mem_req_tag[i],
-            per_bank_mem_req_flags[i]
-        };
-    end
-
-    wire [BANK_MEM_TAG_WIDTH-1:0] bank_mem_req_tag;
-
-    VX_stream_arb #(
-        .NUM_INPUTS (NUM_BANKS),
-        .DATAW      (`CS_MEM_ADDR_WIDTH + 1  + LINE_SIZE + `CS_LINE_WIDTH + BANK_MEM_TAG_WIDTH + `UP(FLAGS_WIDTH)),
-        .ARBITER    ("R")
-    ) mem_req_arb (
-        .clk       (clk),
-        .reset     (reset),
-        .valid_in  (per_bank_mem_req_valid),
-        .ready_in  (per_bank_mem_req_ready),
-        .data_in   (data_in),
-        .data_out  ({mem_req_addr, mem_req_rw, mem_req_byteen, mem_req_data, bank_mem_req_tag, mem_req_flags}),
-        .valid_out (mem_req_valid),
-        .ready_out (mem_req_ready),
-        `UNUSED_PIN (sel_out)
-    );
-
-    if (NUM_BANKS > 1) begin : g_mem_req_tag_multibanks
-        wire [`CS_BANK_SEL_BITS-1:0] mem_req_bank_id = `CS_MEM_ADDR_TO_BANK_ID(mem_req_addr);
-        assign mem_req_tag = MEM_TAG_WIDTH'({bank_mem_req_tag, mem_req_bank_id});
-    end else begin : g_mem_req_tag
-        assign mem_req_tag = MEM_TAG_WIDTH'(bank_mem_req_tag);
     end
 
 `ifdef PERF_ENABLE
