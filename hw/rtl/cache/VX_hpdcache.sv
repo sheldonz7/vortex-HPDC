@@ -508,7 +508,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
             .hpdcache_req_sid_i(hpdcache_req_sid_t'(r)),
 
-            .vx_core_bus     (dcache_req_ports[r]),
+            .vx_core_bus     (),
                                  core_bus_if [NUM_REQS],
             .hpdcache_req_valid_o(dcache_req_valid[r]),
             .hpdcache_req_ready_i(dcache_req_ready[r]),
@@ -555,13 +555,36 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
 
     vx_hpdcache_mem_if_adapter #(
-
+        .hpdcache_mem_id_t    (hpdcache_mem_id_t),
+        .hpdcache_mem_req_t   (hpdcache_mem_req_t),
+        .hpdcache_mem_req_w_t (hpdcache_mem_req_w_t),
+        .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+        .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
     ) i_vx_hpdcache_mem_if_adapter (
         .clk_i,
         .rst_ni,
 
         .vx_mem_bus    (mem_bus_if),
 
+        .mem_req_read_ready_i(dcache_read_ready),
+        .mem_req_read_valid_o(dcache_read_valid),
+        .mem_req_read_o      (dcache_read),
+
+        .mem_resp_read_ready_o(dcache_read_resp_ready),
+        .mem_resp_read_valid_i(dcache_read_resp_valid),
+        .mem_resp_read_i      (dcache_read_resp),
+
+        .mem_req_write_ready_i(dcache_write_ready),
+        .mem_req_write_valid_o(dcache_write_valid),
+        .mem_req_write_o      (dcache_write),
+
+        .mem_req_write_data_ready_i(dcache_write_data_ready),
+        .mem_req_write_data_valid_o(dcache_write_data_valid),
+        .mem_req_write_data_o      (dcache_write_data),
+
+        .mem_resp_write_ready_o(dcache_write_resp_ready),
+        .mem_resp_write_valid_i(dcache_write_resp_valid),
+        .mem_resp_write_i      (dcache_write_resp),
 
     );
 
