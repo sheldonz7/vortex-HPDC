@@ -118,76 +118,10 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     wire [NUM_BANKS-1:0] per_bank_core_req_fire;
 
-    // VX_cache_flush #(
-    //     .NUM_REQS  (NUM_REQS),
-    //     .NUM_BANKS (NUM_BANKS),
-    //     .UUID_WIDTH(UUID_WIDTH),
-    //     .TAG_WIDTH (TAG_WIDTH),
-    //     .BANK_SEL_LATENCY (`TO_OUT_BUF_REG(REQ_XBAR_BUF)) // bank xbar latency
-    // ) flush_unit (
-    //     .clk             (clk),
-    //     .reset           (reset),
-    //     .core_bus_in_if  (core_bus_if),
-    //     .core_bus_out_if (core_bus2_if),
-    //     .bank_req_fire   (per_bank_core_req_fire),
-    //     .flush_begin     (per_bank_flush_begin),
-    //     .flush_uuid      (flush_uuid),
-    //     .flush_end       (per_bank_flush_end)
-    // );
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    // // Core response buffering
-    // wire [NUM_REQS-1:0]                  core_rsp_valid_s;
-    // wire [NUM_REQS-1:0][`CS_WORD_WIDTH-1:0] core_rsp_data_s;
-    // wire [NUM_REQS-1:0][TAG_WIDTH-1:0]   core_rsp_tag_s;
-    // wire [NUM_REQS-1:0]                  core_rsp_ready_s;
-
-    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_rsp_buf
-    //     VX_elastic_buffer #(
-    //         .DATAW   (`CS_WORD_WIDTH + TAG_WIDTH),
-    //         .SIZE    (CORE_RSP_REG_DISABLE ? `TO_OUT_BUF_SIZE(CORE_OUT_BUF) : 0),
-    //         .OUT_REG (`TO_OUT_BUF_REG(CORE_OUT_BUF))
-    //     ) core_rsp_buf (
-    //         .clk       (clk),
-    //         .reset     (reset),
-    //         .valid_in  (core_rsp_valid_s[i]),
-    //         .ready_in  (core_rsp_ready_s[i]),
-    //         .data_in   ({core_rsp_data_s[i], core_rsp_tag_s[i]}),
-    //         .data_out  ({core_bus2_if[i].rsp_data.data, core_bus2_if[i].rsp_data.tag}),
-    //         .valid_out (core_bus2_if[i].rsp_valid),
-    //         .ready_out (core_bus2_if[i].rsp_ready)
-    //     );
-    // end
-
-    ///////////////////////////////////////////////////////////////////////////
-
     VX_mem_bus_if #(
         .DATA_SIZE (LINE_SIZE),
         .TAG_WIDTH (MEM_TAG_WIDTH)
     ) mem_bus_tmp_if();
-
-    // // Memory response buffering
-
-    // wire                         mem_rsp_valid_s;
-    // wire [`CS_LINE_WIDTH-1:0]    mem_rsp_data_s;
-    // wire [MEM_TAG_WIDTH-1:0]     mem_rsp_tag_s;
-    // wire                         mem_rsp_ready_s;
-
-    // VX_elastic_buffer #(
-    //     .DATAW   (MEM_TAG_WIDTH + `CS_LINE_WIDTH),
-    //     .SIZE    (MRSQ_SIZE),
-    //     .OUT_REG (MRSQ_SIZE > 2)
-    // ) mem_rsp_queue (
-    //     .clk        (clk),
-    //     .reset      (reset),
-    //     .valid_in   (mem_bus_tmp_if.rsp_valid),
-    //     .ready_in   (mem_bus_tmp_if.rsp_ready),
-    //     .data_in    ({mem_bus_tmp_if.rsp_data.tag, mem_bus_tmp_if.rsp_data.data}),
-    //     .data_out   ({mem_rsp_tag_s, mem_rsp_data_s}),
-    //     .valid_out  (mem_rsp_valid_s),
-    //     .ready_out  (mem_rsp_ready_s)
-    // );
 
     wire [BANK_MEM_TAG_WIDTH-1:0] bank_mem_rsp_tag;
     wire [`UP(`CS_BANK_SEL_BITS)-1:0] mem_rsp_bank_id;
@@ -199,34 +133,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         assign bank_mem_rsp_tag = mem_rsp_tag_s;
         assign mem_rsp_bank_id = 0;
     end
-
-    // // Memory request buffering
-
-    // wire                        mem_req_valid;
-    // wire [`CS_MEM_ADDR_WIDTH-1:0] mem_req_addr;
-    // wire                        mem_req_rw;
-    // wire [LINE_SIZE-1:0]        mem_req_byteen;
-    // wire [`CS_LINE_WIDTH-1:0]   mem_req_data;
-    // wire [MEM_TAG_WIDTH-1:0]    mem_req_tag;
-    // wire [`UP(FLAGS_WIDTH)-1:0] mem_req_flags;
-    // wire                        mem_req_ready;
-
-    // wire [`UP(FLAGS_WIDTH)-1:0] mem_req_flush_b;
-
-    // VX_elastic_buffer #(
-    //     .DATAW   (1 + LINE_SIZE + `CS_MEM_ADDR_WIDTH + `CS_LINE_WIDTH + MEM_TAG_WIDTH + `UP(FLAGS_WIDTH)),
-    //     .SIZE    (MEM_REQ_REG_DISABLE ? `TO_OUT_BUF_SIZE(MEM_OUT_BUF) : 0),
-    //     .OUT_REG (`TO_OUT_BUF_REG(MEM_OUT_BUF))
-    // ) mem_req_buf (
-    //     .clk       (clk),
-    //     .reset     (reset),
-    //     .valid_in  (mem_req_valid),
-    //     .ready_in  (mem_req_ready),
-    //     .data_in   ({mem_req_rw, mem_req_byteen, mem_req_addr, mem_req_data, mem_req_tag, mem_req_flags}),
-    //     .data_out  ({mem_bus_tmp_if.req_data.rw, mem_bus_tmp_if.req_data.byteen, mem_bus_tmp_if.req_data.addr, mem_bus_tmp_if.req_data.data, mem_bus_tmp_if.req_data.tag, mem_req_flush_b}),
-    //     .valid_out (mem_bus_tmp_if.req_valid),
-    //     .ready_out (mem_bus_tmp_if.req_ready)
-    // );
 
     if (FLAGS_WIDTH != 0) begin : g_mem_req_flags
         assign mem_bus_tmp_if.req_data.flags = mem_req_flush_b;
@@ -253,27 +159,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     wire [NUM_BANKS-1:0][REQ_SEL_WIDTH-1:0]     per_bank_core_req_idx;
     wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_core_req_flags;
     wire [NUM_BANKS-1:0]                        per_bank_core_req_ready;
-
-    wire [NUM_BANKS-1:0]                        per_bank_core_rsp_valid;
-    wire [NUM_BANKS-1:0][`CS_WORD_WIDTH-1:0]    per_bank_core_rsp_data;
-    wire [NUM_BANKS-1:0][TAG_WIDTH-1:0]         per_bank_core_rsp_tag;
-    wire [NUM_BANKS-1:0][REQ_SEL_WIDTH-1:0]     per_bank_core_rsp_idx;
-    wire [NUM_BANKS-1:0]                        per_bank_core_rsp_ready;
-
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_valid;
-    wire [NUM_BANKS-1:0][`CS_MEM_ADDR_WIDTH-1:0] per_bank_mem_req_addr;
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_rw;
-    wire [NUM_BANKS-1:0][LINE_SIZE-1:0]         per_bank_mem_req_byteen;
-    wire [NUM_BANKS-1:0][`CS_LINE_WIDTH-1:0]    per_bank_mem_req_data;
-    wire [NUM_BANKS-1:0][BANK_MEM_TAG_WIDTH-1:0] per_bank_mem_req_tag;
-    wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_mem_req_flags;
-    wire [NUM_BANKS-1:0]                        per_bank_mem_req_ready;
-
-    wire [NUM_BANKS-1:0]                        per_bank_mem_rsp_ready;
-
-    assign per_bank_core_req_fire = per_bank_core_req_valid & per_bank_mem_req_ready;
-
-    assign mem_rsp_ready_s = per_bank_mem_rsp_ready[mem_rsp_bank_id];
 
     // Bank requests dispatch
 
@@ -340,51 +225,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     wire [`PERF_CTR_BITS-1:0] perf_collisions;
 `endif
 
-    // VX_stream_xbar #(
-    //     .NUM_INPUTS  (NUM_REQS),
-    //     .NUM_OUTPUTS (NUM_BANKS),
-    //     .DATAW       (CORE_REQ_DATAW),
-    //     .PERF_CTR_BITS (`PERF_CTR_BITS),
-    //     .ARBITER     ("R"),
-    //     .OUT_BUF     (REQ_XBAR_BUF)
-    // ) req_xbar (
-    //     .clk       (clk),
-    //     .reset     (reset),
-    // `ifdef PERF_ENABLE
-    //     .collisions(perf_collisions),
-    // `else
-    //     `UNUSED_PIN(collisions),
-    // `endif
-    //     .valid_in  (core_req_valid),
-    //     .data_in   (core_req_data_in),
-    //     .sel_in    (core_req_bid),
-    //     .ready_in  (core_req_ready),
-    //     .valid_out (per_bank_core_req_valid),
-    //     .data_out  (core_req_data_out),
-    //     .sel_out   (per_bank_core_req_idx),
-    //     .ready_out (per_bank_core_req_ready)
-    // );
-
-    // for (genvar i = 0; i < NUM_BANKS; ++i) begin : g_core_req_data_out
-    //     assign {
-    //         per_bank_core_req_addr[i],
-    //         per_bank_core_req_rw[i],
-    //         per_bank_core_req_wsel[i],
-    //         per_bank_core_req_byteen[i],
-    //         per_bank_core_req_data[i],
-    //         per_bank_core_req_tag[i],
-    //         per_bank_core_req_flags[i]
-    //     } = core_req_data_out[i];
-    // end
-
-
-
-
-
-
 // hpcache
-        localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
-
+    localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
         // HPDCache configuration for Vortex GPU
         // Core parameters
         nRequesters: NUM_REQS,  // From Vortex NUM_REQS parameter
@@ -445,12 +287,9 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     };
 
-
-
     localparam hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_pkg::hpdcacheBuildConfig(
       HPDcacheUserCfg
     );
-
 
     // generate type definitions
 
@@ -523,14 +362,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         end;
     endgenerate
 
-
-
-
-
-
-
     // if adapter for memory request/response
-     // hpdcache memory interface signals
+    // hpdcache memory interface signals
 
     logic                 dcache_read_ready;
     logic                 dcache_read_valid;
@@ -552,8 +385,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     logic                 dcache_write_resp_valid;
     hpdcache_mem_resp_w_t dcache_write_resp;
 
-
-
     vx_hpdcache_mem_if_adapter #(
         .hpdcache_mem_id_t    (hpdcache_mem_id_t),
         .hpdcache_mem_req_t   (hpdcache_mem_req_t),
@@ -564,6 +395,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         .clk_i,
         .rst_ni,
 
+        // memory request signals
         .vx_mem_bus    (mem_bus_if),
 
         .mem_req_read_ready_i(dcache_read_ready),
@@ -587,7 +419,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         .mem_resp_write_i      (dcache_write_resp),
 
     );
-
 
     hpdcache #(
       .HPDcacheCfg          (HPDcacheCfg),
@@ -671,94 +502,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
       .cfg_default_wb_i                   (1'b0)
     );
 
-
-
-
-    // // Banks access
-    // for (genvar bank_id = 0; bank_id < NUM_BANKS; ++bank_id) begin : g_banks
-    //     wire [`CS_LINE_ADDR_WIDTH-1:0] curr_bank_mem_req_addr;
-
-    //     wire curr_bank_mem_rsp_valid = mem_rsp_valid_s && (mem_rsp_bank_id == bank_id);
-
-    //     VX_cache_bank #(
-    //         .BANK_ID      (bank_id),
-    //         .INSTANCE_ID  (`SFORMATF(("%s-bank%0d", INSTANCE_ID, bank_id))),
-    //         .CACHE_SIZE   (CACHE_SIZE),
-    //         .LINE_SIZE    (LINE_SIZE),
-    //         .NUM_BANKS    (NUM_BANKS),
-    //         .NUM_WAYS     (NUM_WAYS),
-    //         .WORD_SIZE    (WORD_SIZE),
-    //         .NUM_REQS     (NUM_REQS),
-    //         .WRITE_ENABLE (WRITE_ENABLE),
-    //         .WRITEBACK    (WRITEBACK),
-    //         .DIRTY_BYTES  (DIRTY_BYTES),
-    //         .REPL_POLICY  (REPL_POLICY),
-    //         .CRSQ_SIZE    (CRSQ_SIZE),
-    //         .MSHR_SIZE    (MSHR_SIZE),
-    //         .MREQ_SIZE    (MREQ_SIZE),
-    //         .UUID_WIDTH   (UUID_WIDTH),
-    //         .TAG_WIDTH    (TAG_WIDTH),
-    //         .FLAGS_WIDTH  (FLAGS_WIDTH),
-    //         .CORE_OUT_REG (CORE_RSP_REG_DISABLE ? 0 : 1),
-    //         .MEM_OUT_REG  (MEM_REQ_REG_DISABLE ? 0 : 1)
-    //     ) bank (
-    //         .clk                (clk),
-    //         .reset              (reset),
-
-    //     `ifdef PERF_ENABLE
-    //         .perf_read_misses   (perf_read_miss_per_bank[bank_id]),
-    //         .perf_write_misses  (perf_write_miss_per_bank[bank_id]),
-    //         .perf_mshr_stalls   (perf_mshr_stall_per_bank[bank_id]),
-    //     `endif
-
-    //         // Core request
-    //         .core_req_valid     (per_bank_core_req_valid[bank_id]),
-    //         .core_req_addr      (per_bank_core_req_addr[bank_id]),
-    //         .core_req_rw        (per_bank_core_req_rw[bank_id]),
-    //         .core_req_wsel      (per_bank_core_req_wsel[bank_id]),
-    //         .core_req_byteen    (per_bank_core_req_byteen[bank_id]),
-    //         .core_req_data      (per_bank_core_req_data[bank_id]),
-    //         .core_req_tag       (per_bank_core_req_tag[bank_id]),
-    //         .core_req_idx       (per_bank_core_req_idx[bank_id]),
-    //         .core_req_flags     (per_bank_core_req_flags[bank_id]),
-    //         .core_req_ready     (per_bank_core_req_ready[bank_id]),
-
-    //         // Core response
-    //         .core_rsp_valid     (per_bank_core_rsp_valid[bank_id]),
-    //         .core_rsp_data      (per_bank_core_rsp_data[bank_id]),
-    //         .core_rsp_tag       (per_bank_core_rsp_tag[bank_id]),
-    //         .core_rsp_idx       (per_bank_core_rsp_idx[bank_id]),
-    //         .core_rsp_ready     (per_bank_core_rsp_ready[bank_id]),
-
-    //         // Memory request
-    //         .mem_req_valid      (per_bank_mem_req_valid[bank_id]),
-    //         .mem_req_addr       (curr_bank_mem_req_addr),
-    //         .mem_req_rw         (per_bank_mem_req_rw[bank_id]),
-    //         .mem_req_byteen     (per_bank_mem_req_byteen[bank_id]),
-    //         .mem_req_data       (per_bank_mem_req_data[bank_id]),
-    //         .mem_req_tag        (per_bank_mem_req_tag[bank_id]),
-    //         .mem_req_flags      (per_bank_mem_req_flags[bank_id]),
-    //         .mem_req_ready      (per_bank_mem_req_ready[bank_id]),
-
-    //         // Memory response
-    //         .mem_rsp_valid      (curr_bank_mem_rsp_valid),
-    //         .mem_rsp_data       (mem_rsp_data_s),
-    //         .mem_rsp_tag        (bank_mem_rsp_tag),
-    //         .mem_rsp_ready      (per_bank_mem_rsp_ready[bank_id]),
-
-    //         // Flush request
-    //         .flush_begin        (per_bank_flush_begin[bank_id]),
-    //         .flush_uuid         (flush_uuid),
-    //         .flush_end          (per_bank_flush_end[bank_id])
-    //     );
-
-    //     if (NUM_BANKS == 1) begin : g_per_bank_mem_req_addr_multibanks
-    //         assign per_bank_mem_req_addr[bank_id] = curr_bank_mem_req_addr;
-    //     end else begin : g_per_bank_mem_req_addr_singlebank
-    //         assign per_bank_mem_req_addr[bank_id] = `CS_LINE_TO_MEM_ADDR(curr_bank_mem_req_addr, bank_id);
-    //     end
-    // end
-
     // Bank responses gather
 
     wire [NUM_BANKS-1:0][CORE_RSP_DATAW-1:0] core_rsp_data_in;
@@ -789,46 +532,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_rsp_data_s
         assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
-    end
-
-    // Memory request arbitration
-
-    wire [NUM_BANKS-1:0][(`CS_MEM_ADDR_WIDTH + 1 + LINE_SIZE + `CS_LINE_WIDTH + BANK_MEM_TAG_WIDTH + `UP(FLAGS_WIDTH))-1:0] data_in;
-
-    for (genvar i = 0; i < NUM_BANKS; ++i) begin : g_data_in
-        assign data_in[i] = {
-            per_bank_mem_req_addr[i],
-            per_bank_mem_req_rw[i],
-            per_bank_mem_req_byteen[i],
-            per_bank_mem_req_data[i],
-            per_bank_mem_req_tag[i],
-            per_bank_mem_req_flags[i]
-        };
-    end
-
-    wire [BANK_MEM_TAG_WIDTH-1:0] bank_mem_req_tag;
-
-    VX_stream_arb #(
-        .NUM_INPUTS (NUM_BANKS),
-        .DATAW      (`CS_MEM_ADDR_WIDTH + 1  + LINE_SIZE + `CS_LINE_WIDTH + BANK_MEM_TAG_WIDTH + `UP(FLAGS_WIDTH)),
-        .ARBITER    ("R")
-    ) mem_req_arb (
-        .clk       (clk),
-        .reset     (reset),
-        .valid_in  (per_bank_mem_req_valid),
-        .ready_in  (per_bank_mem_req_ready),
-        .data_in   (data_in),
-        .data_out  ({mem_req_addr, mem_req_rw, mem_req_byteen, mem_req_data, bank_mem_req_tag, mem_req_flags}),
-        .valid_out (mem_req_valid),
-        .ready_out (mem_req_ready),
-        `UNUSED_PIN (sel_out)
-    );
-
-    if (NUM_BANKS > 1) begin : g_mem_req_tag_multibanks
-        wire [`CS_BANK_SEL_BITS-1:0] mem_req_bank_id = `CS_MEM_ADDR_TO_BANK_ID(mem_req_addr);
-        assign mem_req_tag = MEM_TAG_WIDTH'({bank_mem_req_tag, mem_req_bank_id});
-    end else begin : g_mem_req_tag
-        assign mem_req_tag = MEM_TAG_WIDTH'(bank_mem_req_tag);
     end
 
 `ifdef PERF_ENABLE
