@@ -391,6 +391,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         .clk_i,
         .rst_ni,
 
+        // memory request signals
         .vx_mem_bus    (mem_bus_if),
     
         // _i suffix for hpdc input ports
