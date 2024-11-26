@@ -14,29 +14,39 @@
 `include "VX_cache_define.vh"
 
 module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
-
+    parameter type hpdcache_mem_id_t = logic,
+    parameter type hpdcache_mem_req_t = logic,
+    parameter type hpdcache_mem_req_w_t = logic,
+    parameter type hpdcache_mem_resp_r_t = logic,
+    parameter type hpdcache_mem_resp_w_t = logic,
+    
+    // VX_mem_bus_if parameters
+    parameter DATA_SIZE = 1,  // Should match dcache data width
+    parameter TAG_WIDTH = 1   // Should match dcache tag width
 ) (
 
     VX_mem_bus_if.master    mem_bus_if,
 
-    input wire mem_req_read_valid_o,
-    output wire mem_req_read_ready_i,
-    input hpdcache_mem_req_t mem_req_read_o,
+    // read interface
+    output logic                 mem_req_read_ready_i,
+    input  logic                 mem_req_read_valid_o,
+    input  hpdcache_mem_req_t    mem_req_read_o,
 
-    output wire mem_resp_read_valid_i,
-    input wire mem_resp_read_ready_o,
+    input  logic                 mem_resp_read_ready_o,
+    output logic                 mem_resp_read_valid_i,
     output hpdcache_mem_resp_r_t mem_resp_read_i,
 
-    input wire mem_req_write_valid_o,
-    output wire mem_req_write_ready_i,
-    input hpdcache_mem_req_t mem_req_write_o,
+    // write interface
+    output logic                 mem_req_write_ready_i,
+    input  logic                 mem_req_write_valid_o,
+    input  hpdcache_mem_req_t    mem_req_write_o,
 
-    input wire mem_req_write_data_valid_o,
-    output wire mem_req_write_data_ready_i,
-    input hpdcache_mem_req_w_t mem_req_write_data_o,
+    output logic                 mem_req_write_data_ready_i,
+    input  logic                 mem_req_write_data_valid_o,
+    input  hpdcache_mem_req_w_t  mem_req_write_data_o,
 
-    output wire mem_resp_write_valid_i,
-    input wire mem_resp_write_ready_o,
+    input  logic                 mem_resp_write_ready_o,
+    output logic                 mem_resp_write_valid_i,
     output hpdcache_mem_resp_w_t mem_resp_write_i
 
 );
@@ -59,5 +69,7 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
 
     assign mem_resp_read_i.mem_resp_r_id = mem_bus_if.rsp_data.tag;
     assign mem_resp_read_i.mem_resp_r_data = mem_bus_if.rsp_data.data;
+
+
 
 endmodule

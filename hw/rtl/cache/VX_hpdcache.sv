@@ -396,27 +396,27 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         .rst_ni,
 
         // memory request signals
-        .vx_mem_bus    (mem_bus_if),
+        .mem_bus_if    (mem_bus_if),
 
-        .mem_req_read_ready_i(dcache_read_ready),
-        .mem_req_read_valid_o(dcache_read_valid),
-        .mem_req_read_o      (dcache_read),
+        .mem_req_read_ready(dcache_read_ready),
+        .mem_req_read_valid(dcache_read_valid),
+        .mem_req_read      (dcache_read),
 
-        .mem_resp_read_ready_o(dcache_read_resp_ready),
-        .mem_resp_read_valid_i(dcache_read_resp_valid),
-        .mem_resp_read_i      (dcache_read_resp),
+        .mem_resp_read_ready(dcache_read_resp_ready),
+        .mem_resp_read_valid(dcache_read_resp_valid),
+        .mem_resp_read      (dcache_read_resp),
 
-        .mem_req_write_ready_i(dcache_write_ready),
-        .mem_req_write_valid_o(dcache_write_valid),
-        .mem_req_write_o      (dcache_write),
+        .mem_req_write_ready(dcache_write_ready),
+        .mem_req_write_valid(dcache_write_valid),
+        .mem_req_write      (dcache_write),
 
-        .mem_req_write_data_ready_i(dcache_write_data_ready),
-        .mem_req_write_data_valid_o(dcache_write_data_valid),
-        .mem_req_write_data_o      (dcache_write_data),
+        .mem_req_write_data_ready(dcache_write_data_ready),
+        .mem_req_write_data_valid(dcache_write_data_valid),
+        .mem_req_write_data      (dcache_write_data),
 
-        .mem_resp_write_ready_o(dcache_write_resp_ready),
-        .mem_resp_write_valid_i(dcache_write_resp_valid),
-        .mem_resp_write_i      (dcache_write_resp),
+        .mem_resp_write_ready(dcache_write_resp_ready),
+        .mem_resp_write_valid(dcache_write_resp_valid),
+        .mem_resp_write      (dcache_write_resp),
 
     );
 
