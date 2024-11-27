@@ -347,8 +347,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
             .hpdcache_req_sid_i(hpdcache_req_sid_t'(r)),
 
-            .vx_core_bus     (),
-                                 core_bus_if [NUM_REQS],
+            .vx_core_bus     (core_bus_if [i]),
+                                
             .hpdcache_req_valid_o(dcache_req_valid[r]),
             .hpdcache_req_ready_i(dcache_req_ready[r]),
             .hpdcache_req_o      (dcache_req[r]),
