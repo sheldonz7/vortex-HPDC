@@ -102,9 +102,9 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     localparam REQ_XBAR_BUF = (NUM_REQS > 4) ? 2 : 0;
 
 `ifdef PERF_ENABLE
-    wire [NUM_BANKS-1:0] perf_read_miss_per_bank;
-    wire [NUM_BANKS-1:0] perf_write_miss_per_bank;
-    wire [NUM_BANKS-1:0] perf_mshr_stall_per_bank;
+    wire perf_read_miss_per_bank;
+    wire perf_write_miss_per_bank;
+    wire perf_mshr_stall_per_bank;
 `endif
 
     VX_mem_bus_if #(
@@ -118,112 +118,115 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     wire [NUM_BANKS-1:0] per_bank_core_req_fire;
 
-    VX_mem_bus_if #(
-        .DATA_SIZE (LINE_SIZE),
-        .TAG_WIDTH (MEM_TAG_WIDTH)
-    ) mem_bus_tmp_if();
+    // VX_mem_bus_if #(
+    //     .DATA_SIZE (LINE_SIZE),
+    //     .TAG_WIDTH (MEM_TAG_WIDTH)
+    // ) mem_bus_tmp_if();
 
-    wire [BANK_MEM_TAG_WIDTH-1:0] bank_mem_rsp_tag;
-    wire [`UP(`CS_BANK_SEL_BITS)-1:0] mem_rsp_bank_id;
+    // wire [BANK_MEM_TAG_WIDTH-1:0] bank_mem_rsp_tag;
+    // wire [`UP(`CS_BANK_SEL_BITS)-1:0] mem_rsp_bank_id;
 
-    if (NUM_BANKS > 1) begin : g_mem_rsp_tag_s_with_banks
-        assign bank_mem_rsp_tag = mem_rsp_tag_s[MEM_TAG_WIDTH-1:`CS_BANK_SEL_BITS];
-        assign mem_rsp_bank_id = mem_rsp_tag_s[`CS_BANK_SEL_BITS-1:0];
-    end else begin : g_mem_rsp_tag_s_no_bank
-        assign bank_mem_rsp_tag = mem_rsp_tag_s;
-        assign mem_rsp_bank_id = 0;
-    end
+    // if (NUM_BANKS > 1) begin : g_mem_rsp_tag_s_with_banks
+    //     assign bank_mem_rsp_tag = mem_rsp_tag_s[MEM_TAG_WIDTH-1:`CS_BANK_SEL_BITS];
+    //     assign mem_rsp_bank_id = mem_rsp_tag_s[`CS_BANK_SEL_BITS-1:0];
+    // end else begin : g_mem_rsp_tag_s_no_bank
+    //     assign bank_mem_rsp_tag = mem_rsp_tag_s;
+    //     assign mem_rsp_bank_id = 0;
+    // end
 
-    if (FLAGS_WIDTH != 0) begin : g_mem_req_flags
-        assign mem_bus_tmp_if.req_data.flags = mem_req_flush_b;
-    end else begin : g_no_mem_req_flags
-        assign mem_bus_tmp_if.req_data.flags = '0;
-        `UNUSED_VAR (mem_req_flush_b)
-    end
+    // if (FLAGS_WIDTH != 0) begin : g_mem_req_flags
+    //     assign mem_bus_tmp_if.req_data.flags = mem_req_flush_b;
+    // end else begin : g_no_mem_req_flags
+    //     assign mem_bus_tmp_if.req_data.flags = '0;
+    //     `UNUSED_VAR (mem_req_flush_b)
+    // end
 
-    if (WRITE_ENABLE) begin : g_mem_bus_if
-        `ASSIGN_VX_MEM_BUS_IF (mem_bus_if, mem_bus_tmp_if);
-    end else begin : g_mem_bus_if_ro
-        `ASSIGN_VX_MEM_BUS_RO_IF (mem_bus_if, mem_bus_tmp_if);
-    end
+    // if (WRITE_ENABLE) begin : g_mem_bus_if
+    //     `ASSIGN_VX_MEM_BUS_IF (mem_bus_if, mem_bus_tmp_if);
+    // end else begin : g_mem_bus_if_ro
+    //     `ASSIGN_VX_MEM_BUS_RO_IF (mem_bus_if, mem_bus_tmp_if);
+    // end
 
     ///////////////////////////////////////////////////////////////////////////
 
-    wire [NUM_BANKS-1:0]                        per_bank_core_req_valid;
-    wire [NUM_BANKS-1:0][`CS_LINE_ADDR_WIDTH-1:0] per_bank_core_req_addr;
-    wire [NUM_BANKS-1:0]                        per_bank_core_req_rw;
-    wire [NUM_BANKS-1:0][WORD_SEL_WIDTH-1:0]    per_bank_core_req_wsel;
-    wire [NUM_BANKS-1:0][WORD_SIZE-1:0]         per_bank_core_req_byteen;
-    wire [NUM_BANKS-1:0][`CS_WORD_WIDTH-1:0]    per_bank_core_req_data;
-    wire [NUM_BANKS-1:0][TAG_WIDTH-1:0]         per_bank_core_req_tag;
-    wire [NUM_BANKS-1:0][REQ_SEL_WIDTH-1:0]     per_bank_core_req_idx;
-    wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_core_req_flags;
-    wire [NUM_BANKS-1:0]                        per_bank_core_req_ready;
+    // wire [NUM_BANKS-1:0]                        per_bank_core_req_valid;
+    // wire [NUM_BANKS-1:0][`CS_LINE_ADDR_WIDTH-1:0] per_bank_core_req_addr;
+    // wire [NUM_BANKS-1:0]                        per_bank_core_req_rw;
+    // wire [NUM_BANKS-1:0][WORD_SEL_WIDTH-1:0]    per_bank_core_req_wsel;
+    // wire [NUM_BANKS-1:0][WORD_SIZE-1:0]         per_bank_core_req_byteen;
+    // wire [NUM_BANKS-1:0][`CS_WORD_WIDTH-1:0]    per_bank_core_req_data;
+    // wire [NUM_BANKS-1:0][TAG_WIDTH-1:0]         per_bank_core_req_tag;
+    // wire [NUM_BANKS-1:0][REQ_SEL_WIDTH-1:0]     per_bank_core_req_idx;
+    // wire [NUM_BANKS-1:0][`UP(FLAGS_WIDTH)-1:0]  per_bank_core_req_flags;
+    // wire [NUM_BANKS-1:0]                        per_bank_core_req_ready;
 
-    // Bank requests dispatch
+    // // Bank requests dispatch
 
-    wire [NUM_REQS-1:0]                      core_req_valid;
-    wire [NUM_REQS-1:0][`CS_WORD_ADDR_WIDTH-1:0] core_req_addr;
-    wire [NUM_REQS-1:0]                      core_req_rw;
-    wire [NUM_REQS-1:0][WORD_SIZE-1:0]       core_req_byteen;
-    wire [NUM_REQS-1:0][`CS_WORD_WIDTH-1:0]  core_req_data;
-    wire [NUM_REQS-1:0][TAG_WIDTH-1:0]       core_req_tag;
-    wire [NUM_REQS-1:0][`UP(FLAGS_WIDTH)-1:0] core_req_flags;
-    wire [NUM_REQS-1:0]                      core_req_ready;
+    // wire [NUM_REQS-1:0]                      core_req_valid;
+    // wire [NUM_REQS-1:0][`CS_WORD_ADDR_WIDTH-1:0] core_req_addr;
+    // wire [NUM_REQS-1:0]                      core_req_rw;
+    // wire [NUM_REQS-1:0][WORD_SIZE-1:0]       core_req_byteen;
+    // wire [NUM_REQS-1:0][`CS_WORD_WIDTH-1:0]  core_req_data;
+    // wire [NUM_REQS-1:0][TAG_WIDTH-1:0]       core_req_tag;
+    // wire [NUM_REQS-1:0][`UP(FLAGS_WIDTH)-1:0] core_req_flags;
+    // wire [NUM_REQS-1:0]                      core_req_ready;
 
-    wire [NUM_REQS-1:0][LINE_ADDR_WIDTH-1:0] core_req_line_addr;
-    wire [NUM_REQS-1:0][BANK_SEL_WIDTH-1:0]  core_req_bid;
-    wire [NUM_REQS-1:0][WORD_SEL_WIDTH-1:0]  core_req_wsel;
+    // wire [NUM_REQS-1:0][LINE_ADDR_WIDTH-1:0] core_req_line_addr;
+    // wire [NUM_REQS-1:0][BANK_SEL_WIDTH-1:0]  core_req_bid;
+    // wire [NUM_REQS-1:0][WORD_SEL_WIDTH-1:0]  core_req_wsel;
 
-    wire [NUM_REQS-1:0][CORE_REQ_DATAW-1:0]  core_req_data_in;
-    wire [NUM_BANKS-1:0][CORE_REQ_DATAW-1:0] core_req_data_out;
+    // wire [NUM_REQS-1:0][CORE_REQ_DATAW-1:0]  core_req_data_in;
+    // wire [NUM_BANKS-1:0][CORE_REQ_DATAW-1:0] core_req_data_out;
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req
-        assign core_req_valid[i]  = core_bus2_if[i].req_valid;
-        assign core_req_rw[i]     = core_bus2_if[i].req_data.rw;
-        assign core_req_byteen[i] = core_bus2_if[i].req_data.byteen;
-        assign core_req_addr[i]   = core_bus2_if[i].req_data.addr;
-        assign core_req_data[i]   = core_bus2_if[i].req_data.data;
-        assign core_req_tag[i]    = core_bus2_if[i].req_data.tag;
-        assign core_req_flags[i]  = `UP(FLAGS_WIDTH)'(core_bus2_if[i].req_data.flags);
-        assign core_bus2_if[i].req_ready = core_req_ready[i];
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req
+    //     assign core_req_valid[i]  = core_bus2_if[i].req_valid;
+    //     assign core_req_rw[i]     = core_bus2_if[i].req_data.rw;
+    //     assign core_req_byteen[i] = core_bus2_if[i].req_data.byteen;
+    //     assign core_req_addr[i]   = core_bus2_if[i].req_data.addr;
+    //     assign core_req_data[i]   = core_bus2_if[i].req_data.data;
+    //     assign core_req_tag[i]    = core_bus2_if[i].req_data.tag;
+    //     assign core_req_flags[i]  = `UP(FLAGS_WIDTH)'(core_bus2_if[i].req_data.flags);
+    //     assign core_bus2_if[i].req_ready = core_req_ready[i];
+    // end
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_wsel
-        if (WORDS_PER_LINE > 1) begin : g_wsel
-            assign core_req_wsel[i] = core_req_addr[i][0 +: WORD_SEL_BITS];
-        end else begin : g_no_wsel
-            assign core_req_wsel[i] = '0;
-        end
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_wsel
+    //     if (WORDS_PER_LINE > 1) begin : g_wsel
+    //         assign core_req_wsel[i] = core_req_addr[i][0 +: WORD_SEL_BITS];
+    //     end else begin : g_no_wsel
+    //         assign core_req_wsel[i] = '0;
+    //     end
+    // end
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_line_addr
-        assign core_req_line_addr[i] = core_req_addr[i][(BANK_SEL_BITS + WORD_SEL_BITS) +: LINE_ADDR_WIDTH];
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_line_addr
+    //     assign core_req_line_addr[i] = core_req_addr[i][(BANK_SEL_BITS + WORD_SEL_BITS) +: LINE_ADDR_WIDTH];
+    // end
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_bid
-        if (NUM_BANKS > 1) begin : g_multibanks
-            assign core_req_bid[i] = core_req_addr[i][WORD_SEL_BITS +: BANK_SEL_BITS];
-        end else begin : g_singlebank
-            assign core_req_bid[i] = '0;
-        end
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_bid
+    //     if (NUM_BANKS > 1) begin : g_multibanks
+    //         assign core_req_bid[i] = core_req_addr[i][WORD_SEL_BITS +: BANK_SEL_BITS];
+    //     end else begin : g_singlebank
+    //         assign core_req_bid[i] = '0;
+    //     end
+    // end
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_data_in
-        assign core_req_data_in[i] = {
-            core_req_line_addr[i],
-            core_req_rw[i],
-            core_req_wsel[i],
-            core_req_byteen[i],
-            core_req_data[i],
-            core_req_tag[i],
-            core_req_flags[i]
-        };
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_data_in
+    //     assign core_req_data_in[i] = {
+    //         core_req_line_addr[i],
+    //         core_req_rw[i],
+    //         core_req_wsel[i],
+    //         core_req_byteen[i],
+    //         core_req_data[i],
+    //         core_req_tag[i],
+    //         core_req_flags[i]
+    //     };
+    // end
 
 `ifdef PERF_ENABLE
     wire [`PERF_CTR_BITS-1:0] perf_collisions;
 `endif
+
+
+
 
 // hpcache
     localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
@@ -238,7 +241,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         reqWords: 1,  // Single word requests
 
         // Request tracking
-        reqTransIdWidth: TAG_WIDTH,  // From Vortex TAG_WIDTH
+        reqTransIdWidth: ,  // From Vortex TAG_WIDTH
         reqSrcIdWidth: `CS_REQ_SEL_BITS,  // From Vortex CS_REQ_SEL_BITS (`CLOG2(NUM_REQS))
 
         // Cache organization
@@ -345,19 +348,19 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
             .clk_i,
             .rst_ni,
 
-            .hpdcache_req_sid_i(hpdcache_req_sid_t'(r)),
+            .hpdcache_req_sid_i(hpdcache_req_sid(r)),
 
             .vx_core_bus     (core_bus_if [i]),
                                 
-            .hpdcache_req_valid_o(dcache_req_valid[r]),
-            .hpdcache_req_ready_i(dcache_req_ready[r]),
-            .hpdcache_req_o      (dcache_req[r]),
-            .hpdcache_req_abort_o(dcache_req_abort[r]),
-            .hpdcache_req_tag_o  (dcache_req_tag[r]),
-            .hpdcache_req_pma_o  (dcache_req_pma[r]),
+            .hpdcache_req_valid(dcache_req_valid[r]),
+            .hpdcache_req_ready(dcache_req_ready[r]),
+            .hpdcache_req      (dcache_req[r]),
+            .hpdcache_req_abort(dcache_req_abort[r]),
+            .hpdcache_req_tag  (dcache_req_tag[r]),
+            .hpdcache_req_pma  (dcache_req_pma[r]),
 
-            .hpdcache_rsp_valid_i(dcache_rsp_valid[r]),
-            .hpdcache_rsp_i      (dcache_rsp[r])
+            .hpdcache_rsp_valid(dcache_rsp_valid[r]),
+            .hpdcache_rsp      (dcache_rsp[r])
         );
         end;
     endgenerate
