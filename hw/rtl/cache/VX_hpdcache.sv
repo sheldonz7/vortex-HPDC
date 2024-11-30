@@ -101,11 +101,15 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     localparam REQ_XBAR_BUF = (NUM_REQS > 4) ? 2 : 0;
 
+
+// performance monitoring and tracking
 `ifdef PERF_ENABLE
     wire perf_read_miss_per_bank;
     wire perf_write_miss_per_bank;
     wire perf_mshr_stall_per_bank;
 `endif
+
+    logic wbuffer_empty_o;
 
     VX_mem_bus_if #(
         .DATA_SIZE (WORD_SIZE),
@@ -235,14 +239,14 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         nRequesters: NUM_REQS,  // From Vortex NUM_REQS parameter
         paWidth: `MEM_ADDR_WIDTH,  // From Vortex MEM_ADDR_WIDTH
         wordWidth: `CS_WORD_WIDTH,  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
-        sets: `CS_LINES_PER_BANK,  // From Vortex CS_LINES_PER_BANK (CACHE_SIZE/(LINE_SIZE*NUM_WAYS*NUM_BANKS))
+        sets: `CS_LINES_PER_BANK,  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
         ways: NUM_WAYS,  // From Vortex NUM_WAYS
         clWords: `CS_WORDS_PER_LINE,  // From Vortex CS_WORDS_PER_LINE (LINE_SIZE/WORD_SIZE)
         reqWords: 1,  // Single word requests
 
         // Request tracking
-        reqTransIdWidth: ,  // From Vortex TAG_WIDTH
-        reqSrcIdWidth: `CS_REQ_SEL_BITS,  // From Vortex CS_REQ_SEL_BITS (`CLOG2(NUM_REQS))
+        reqTransIdWidth: TAG_WIDTH,  // core request tag width
+        reqSrcIdWidth: `CS_REQ_SEL_BITS,  // `CLOG2(NUM_REQS)
 
         // Cache organization
         victimSel: (REPL_POLICY == `CS_REPL_PLRU) ? hpdcache_pkg::HPDCACHE_VICTIM_PLRU :  // hpdcache does not support cyclic
@@ -252,7 +256,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         dataWaysPerRamWord: __minu(NUM_WAYS, 128/`CS_WORD_WIDTH),
         dataSetsPerRam: `CS_LINES_PER_BANK,
         dataRamByteEnable: 1'b1,
-        accessWords: __maxu(LINE_SIZE / (2 * WORD_SIZE), 1),
+        accessWords: __maxu(`CS_LINE_WIDTH / (2 * `CS_WORD_WIDTH), 1),
 
         // MSHR configuration
         mshrSets: (MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2,
@@ -316,8 +320,9 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     // if adapter for load/store core request/response
 
-    localparam int HPDCACHE_NREQUESTERS = NUM_REQS;
+    localparam int HPDCACHE_NREQUESTERS = NUM_REQS;   // number of hpdcache port == Vortex number of word requests every cycle
 
+    // hardware prefetcher
     typedef logic [63:0] hwpf_stride_param_t;
 
     logic                        dcache_req_valid[HPDCACHE_NREQUESTERS];
@@ -332,8 +337,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
 
     generate
-        for (genvar i = 0; i < NUM_REQS; ++i) begin : gen_vx_hpdcache_if_adapter
-            vx_hpdcache_if_adapter #(
+        for (genvar r = 0; r < NUM_REQS; ++i) begin : gen_vx_hpdcache_if_adapter
+            VX_hpdcache_core_if_adapter #(
             // .CVA6Cfg              (CVA6Cfg),
             .HPDcacheCfg          (HPDcacheCfg),
             .hpdcache_tag_t       (hpdcache_tag_t),
@@ -341,8 +346,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
             .hpdcache_req_sid_t   (hpdcache_req_sid_t),
             .hpdcache_req_t       (hpdcache_req_t),
             .hpdcache_rsp_t       (hpdcache_rsp_t),
-            .dcache_req_i_t       (dcache_req_i_t),
-            .dcache_req_o_t       (dcache_req_o_t),
+            //.dcache_req_i_t       (dcache_req_i_t),
+            //.dcache_req_o_t       (dcache_req_o_t),
             // .is_load_port         (1'b1)
         ) i_vx_hpdcache_if_adapter (
             .clk_i,
