@@ -49,6 +49,7 @@ module Vortex_hpdcache_core_if_adapter
     // output wire core_req_ready,
 
     input hpdcache_req_sid_t hpdcache_req_sid_i,
+    output logic            flush_op_o,
     VX_mem_bus_if.slave     vx_core_bus,
 
     // HPDCache Interface
@@ -73,31 +74,29 @@ module Vortex_hpdcache_core_if_adapter
     input hpdcache_rsp_t               dcache_rsp    ;
 
 );
-    logic [`MEM_ADDR_WIDTH-1:0] byte_req_addr;
-    logic []      hpdcache_addr_offset;
+    logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1:0] word_addr_no_tag;
+    logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1+`CLOG2(REQ_DATA_SIZE):0] byte_addr_no_tag;
+    
+    wire flush_op;
+    wire cmo_operation;
 
-
-    // CMO detection
-    wire CMO ;
-    wire CMO_TYPE ; 
+    assign cmo_operation = flush_op;
 
     // signal handling and bitfield generation
-    assign line_idx = addr_st0[`CS_LINE_SEL_BITS-1:0];
-    assign line_tag = `CS_LINE_ADDR_TAG(addr_st0);
+    // assign line_idx = addr_st0[`CS_LINE_SEL_BITS-1:0];
+    assign addr_tag = `CS_WORD_ADDR_TAG(vx_core_bus.req_data.addr);
+
 
     // generate byte address from word address and remove tag bits    
-    assign byte_req_addr = vx_core_bus.req_data.addr << `CLOG2(REQ_DATA_SIZE); // core request is the word address, shift by
-    assign hpdcache_addr_offset = 
+    assign word_addr_no_tag = `CS_WORD_ADDR_NO_TAG(vx_core_bus.req_data.addr);
+    
+    assign byte_addr_no_tag = word_addr_no_tag <<`CLOG2(REQ_DATA_SIZE); // core request is the word address, shift by
+  
 
 
-    // CMO
-    assign 
+    // flush operation detection
+    assign flush_op = vx_core_bus.req_data.flags[`MEM_REQ_FLAG_FLUSH];
 
-
-    // MSHR Handling Signals (simplified for integration)
-    reg mshr_alloc_valid;
-    reg [ADDR_WIDTH-1:0] mshr_alloc_addr;
-    reg mshr_alloc_ready;
 
     // Request and Response Control Logic
     // assign hpdcache_req_valid = core_req_valid && ~bypass_request && mshr_alloc_ready;
@@ -109,19 +108,16 @@ module Vortex_hpdcache_core_if_adapter
 
     assign vx_core_bus.req_ready = hpdcache_req_ready;
     assign hpdcache_req_valid = vx_core_bus.req_valid;
-
-    assign hpdcache_req.addr_offset = hpdcache_addr_offset;
-    
-    
+    assign hpdcache_req.addr_offset = byte_addr_no_tag;
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
-    assign hpdcache_req.op = vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_LOAD : hpdcache_pkg::HPDCACHE_REQ_STORE;
+    assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_LOAD : hpdcache_pkg::HPDCACHE_REQ_STORE);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
     assign hpdcache_req.size = `CLOG2(DATA_SIZE); // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
     assign hpdcache_req.tid = vx_core_bus.req_data.tag;
-    assign hpdcache_req.need_rsp = vx_core_bus.req_data.rw ? 1'b1 : 1'b0;
+    assign hpdcache_req.need_rsp = cmo_operation ? 1'b1 : (vx_core_bus.req_data.rw ? 1'b1 : 1'b0);
     assign hpdcache_req.phys_indexed = 1'b1;
-    assign hpdcache_req.addr_tag = line_tag;
+    assign hpdcache_req.addr_tag = addr_tag;
     assign hpdcache_req.pma.uncacheable = 1'b0;
     assign hpdcache_req.pma.io = 1'b0;
     assign hpdcache_req.pma.wr_policy_hint = WRITEBACK ? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
@@ -130,7 +126,7 @@ module Vortex_hpdcache_core_if_adapter
     assign hpdcache_req_tag_o = '0; // unused on physically indexed request
     assign hpdcache_req_pma_o.uncacheable = 1'b0;    // unused on Vortex yet
     assign hpdcache_req_pma_o.io = 1'b0;
-    assign hpdcache_req_pma_o.wr_policy_hint = WRITEBACK ? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
+    assign hpdcache_req_pma_o.wr_policy_hint = '0;  // unused on Vortex yet, only for virtual index
 
 
     // // Response Path
@@ -157,21 +153,8 @@ module Vortex_hpdcache_core_if_adapter
     // end
     // wire flush_complete = (/* condition for flush completion */);
 
-    // Performance Counters
-    reg [31:0] cache_hits, cache_misses;
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            cache_hits <= 0;
-            cache_misses <= 0;
-        end else if (hpdcache_rsp_valid) begin
-            if (~is_miss) cache_hits <= cache_hits + 1;
-            else cache_misses <= cache_misses + 1;
-        end
-    end
+    assign flush_op_o = flush_op;
 
-    assign perf_monitor_valid = hpdcache_rsp_valid;
-    assign perf_cache_hits = cache_hits;
-    assign perf_cache_misses = cache_misses;
 
 endmodule
 

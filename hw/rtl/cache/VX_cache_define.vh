@@ -52,6 +52,10 @@
 `define CS_TAG_SEL_ADDR_END     (`CS_WORD_ADDR_WIDTH-1)
 
 `define CS_LINE_ADDR_TAG(x)     x[`CS_LINE_ADDR_WIDTH-1 : `CS_LINE_SEL_BITS]
+`define CS_WORD_ADDR_TAG(x)     x[`CS_WORD_ADDR_WIDTH-1 : `CS_TAG_SEL_ADDR_START]
+`define CS_WORD_ADDR_NO_TAG(x)  x[`CS_TAG_SEL_ADDR_START-1:0]
+
+`define CS_WORD_ADDR_NO_TAG_WIDTH  (`CS_WORD_SEL_BITS + `CS_BANK_SEL_BITS + `CS_LINE_SEL_BITS)
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -109,7 +109,17 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     wire perf_mshr_stall_per_bank;
 `endif
 
+    // if write buffer is currently empty
     logic wbuffer_empty_o;
+
+    // whether
+    logic [NUM_REQS-1:0] flush_req_valid;
+    logic dcache_flush;
+
+    // one or more of the requesters issue a flush request
+    assign dcache_flush = flush_req_valid != 0;
+
+
 
     VX_mem_bus_if #(
         .DATA_SIZE (WORD_SIZE),
@@ -335,6 +345,8 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     hpdcache_rsp_t               dcache_rsp      [HPDCACHE_NREQUESTERS];
     logic                        dcache_read_miss, dcache_write_miss;
 
+    
+
 
     generate
         for (genvar r = 0; r < NUM_REQS; ++i) begin : gen_vx_hpdcache_if_adapter
@@ -354,7 +366,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
             .rst_ni,
 
             .hpdcache_req_sid_i(hpdcache_req_sid(r)),
-
+            .flush_op_o        (flush_req_valid[r]),
             .vx_core_bus     (core_bus_if [i]),
                                 
             .hpdcache_req_valid(dcache_req_valid[r]),
@@ -369,6 +381,12 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
         );
         end;
     endgenerate
+
+    // CMO request generation
+
+
+
+
 
     // if adapter for memory request/response
     // hpdcache memory interface signals
