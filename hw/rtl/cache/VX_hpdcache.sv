@@ -113,12 +113,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     logic wbuffer_empty_o;
 
     // whether
-    logic [NUM_REQS-1:0] flush_req_valid;
     logic dcache_flush;
-
-    // one or more of the requesters issue a flush request
-    assign dcache_flush = flush_req_valid != 0;
-
 
 
     VX_mem_bus_if #(
@@ -345,7 +340,10 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     hpdcache_rsp_t               dcache_rsp      [HPDCACHE_NREQUESTERS];
     logic                        dcache_read_miss, dcache_write_miss;
 
-    
+    logic dcache_enable_i;
+
+    // turn on by default
+    assign dcache_enable_i = 1'b1;
 
 
     generate
@@ -366,7 +364,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
             .rst_ni,
 
             .hpdcache_req_sid_i(hpdcache_req_sid(r)),
-            .flush_op_o        (flush_req_valid[r]),
+
             .vx_core_bus     (core_bus_if [i]),
                                 
             .hpdcache_req_valid(dcache_req_valid[r]),
@@ -528,37 +526,37 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
       .cfg_default_wb_i                   (1'b0)
     );
 
-    // Bank responses gather
+    // // Bank responses gather
 
-    wire [NUM_BANKS-1:0][CORE_RSP_DATAW-1:0] core_rsp_data_in;
-    wire [NUM_REQS-1:0][CORE_RSP_DATAW-1:0]  core_rsp_data_out;
+    // wire [NUM_BANKS-1:0][CORE_RSP_DATAW-1:0] core_rsp_data_in;
+    // wire [NUM_REQS-1:0][CORE_RSP_DATAW-1:0]  core_rsp_data_out;
 
-    for (genvar i = 0; i < NUM_BANKS; ++i) begin : g_core_rsp_data_in
-        assign core_rsp_data_in[i] = {per_bank_core_rsp_data[i], per_bank_core_rsp_tag[i]};
-    end
+    // for (genvar i = 0; i < NUM_BANKS; ++i) begin : g_core_rsp_data_in
+    //     assign core_rsp_data_in[i] = {per_bank_core_rsp_data[i], per_bank_core_rsp_tag[i]};
+    // end
 
-    VX_stream_xbar #(
-        .NUM_INPUTS  (NUM_BANKS),
-        .NUM_OUTPUTS (NUM_REQS),
-        .DATAW       (CORE_RSP_DATAW),
-        .ARBITER     ("R")
-    ) rsp_xbar (
-        .clk       (clk),
-        .reset     (reset),
-        `UNUSED_PIN (collisions),
-        .valid_in  (per_bank_core_rsp_valid),
-        .data_in   (core_rsp_data_in),
-        .sel_in    (per_bank_core_rsp_idx),
-        .ready_in  (per_bank_core_rsp_ready),
-        .valid_out (core_rsp_valid_s),
-        .data_out  (core_rsp_data_out),
-        .ready_out (core_rsp_ready_s),
-        `UNUSED_PIN (sel_out)
-    );
+    // VX_stream_xbar #(
+    //     .NUM_INPUTS  (NUM_BANKS),
+    //     .NUM_OUTPUTS (NUM_REQS),
+    //     .DATAW       (CORE_RSP_DATAW),
+    //     .ARBITER     ("R")
+    // ) rsp_xbar (
+    //     .clk       (clk),
+    //     .reset     (reset),
+    //     `UNUSED_PIN (collisions),
+    //     .valid_in  (per_bank_core_rsp_valid),
+    //     .data_in   (core_rsp_data_in),
+    //     .sel_in    (per_bank_core_rsp_idx),
+    //     .ready_in  (per_bank_core_rsp_ready),
+    //     .valid_out (core_rsp_valid_s),
+    //     .data_out  (core_rsp_data_out),
+    //     .ready_out (core_rsp_ready_s),
+    //     `UNUSED_PIN (sel_out)
+    // );
 
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_rsp_data_s
-        assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
-    end
+    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_rsp_data_s
+    //     assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
+    // end
 
 `ifdef PERF_ENABLE
     // per cycle: core_reads, core_writes
