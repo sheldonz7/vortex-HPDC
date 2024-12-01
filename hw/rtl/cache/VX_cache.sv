@@ -64,7 +64,9 @@ module VX_cache import VX_gpu_pkg::*; #(
     parameter CORE_OUT_BUF          = 3,
 
     // Memory request output register
-    parameter MEM_OUT_BUF           = 3
+    parameter MEM_OUT_BUF           = 3, 
+
+    parameter ENABLE_HPDCACHE       = 0
  ) (
     // PERF
 `ifdef PERF_ENABLE
@@ -533,6 +535,16 @@ module VX_cache import VX_gpu_pkg::*; #(
     end else begin : g_mem_req_tag
         assign mem_req_tag = MEM_TAG_WIDTH'(bank_mem_req_tag);
     end
+
+// Need these to stop "wire not used" errors
+`ifdef ENABLE_HPDCACHE
+    wire hpdcache_enabled = ENABLE_HPDCACHE;
+`else
+    wire hpdcache_enabled = 0;
+`endif
+always @(*) begin
+    $display("HPD Cache Enabled: %b", hpdcache_enabled);
+end
 
 `ifdef PERF_ENABLE
     // per cycle: core_reads, core_writes

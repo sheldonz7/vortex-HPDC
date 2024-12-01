@@ -73,7 +73,9 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
     parameter CORE_OUT_BUF          = 3,
 
     // Memory request output buffer
-    parameter MEM_OUT_BUF           = 3
+    parameter MEM_OUT_BUF           = 3,
+
+    parameter ENABLE_HPDCACHE       = 0
  ) (
 
     input wire clk,
