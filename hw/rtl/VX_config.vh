@@ -592,6 +592,13 @@
     `define DCACHE_NUM_BANKS 1
 `endif
 
+// HPDC enable
+`ifdef HPDCACHE_ENABLE
+    `define HPDCACHE_ENABLED 1
+`else
+    `define HPDCACHE_ENABLED 0
+`endif
+
 // Number of Cache Units
 `ifndef NUM_DCACHES
 `define NUM_DCACHES `UP(`SOCKET_SIZE / 4)
