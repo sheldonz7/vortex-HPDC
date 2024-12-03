@@ -11,246 +11,154 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Vortex_axi: Updated version to include HPDcache integration
+
 `include "VX_define.vh"
 
-module Vortex_axi import VX_gpu_pkg::*; #(
-    parameter AXI_DATA_WIDTH = `VX_MEM_DATA_WIDTH,
-    parameter AXI_ADDR_WIDTH = `MEM_ADDR_WIDTH + (`VX_MEM_DATA_WIDTH/8),
-    parameter AXI_TID_WIDTH  = `VX_MEM_TAG_WIDTH,
-    parameter AXI_NUM_BANKS  = 1
-)(
-    `SCOPE_IO_DECL
+module Vortex_axi 
+#(
+    parameter AXI_DATA_WIDTH  = 512,
+    parameter AXI_ADDR_WIDTH  = 64,
+    parameter AXI_TID_WIDTH   = 6,
+    parameter MEM_LINE_SIZE   = 64,
+    parameter MEM_ADDR_WIDTH  = 64,
+    parameter MEM_DATA_WIDTH  = 512,
+    parameter MEM_TAG_WIDTH   = 10
+) (
+    input  wire clk,
+    input  wire reset,
 
-    // Clock
-    input  wire                         clk,
-    input  wire                         reset,
+    // Core request interface
+    input  wire mem_req_valid,
+    input  wire mem_req_rw,
+    input  wire [MEM_ADDR_WIDTH-1:0] mem_req_addr,
+    input  wire [MEM_LINE_SIZE-1:0] mem_req_byteen,
+    input  wire [MEM_DATA_WIDTH-1:0] mem_req_data,
+    input  wire [MEM_TAG_WIDTH-1:0] mem_req_tag,
+    output wire mem_req_ready,
 
-    // AXI write request address channel
-    output wire                         m_axi_awvalid [AXI_NUM_BANKS],
-    input wire                          m_axi_awready [AXI_NUM_BANKS],
-    output wire [AXI_ADDR_WIDTH-1:0]    m_axi_awaddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_awid [AXI_NUM_BANKS],
-    output wire [7:0]                   m_axi_awlen [AXI_NUM_BANKS],
-    output wire [2:0]                   m_axi_awsize [AXI_NUM_BANKS],
-    output wire [1:0]                   m_axi_awburst [AXI_NUM_BANKS],
-    output wire [1:0]                   m_axi_awlock [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_awcache [AXI_NUM_BANKS],
-    output wire [2:0]                   m_axi_awprot [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_awqos [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_awregion [AXI_NUM_BANKS],
+    // Core response interface
+    output wire mem_rsp_valid,
+    output wire [MEM_DATA_WIDTH-1:0] mem_rsp_data,
+    output wire [MEM_TAG_WIDTH-1:0] mem_rsp_tag,
+    input  wire mem_rsp_ready,
 
-    // AXI write request data channel
-    output wire                         m_axi_wvalid [AXI_NUM_BANKS],
-    input wire                          m_axi_wready [AXI_NUM_BANKS],
-    output wire [AXI_DATA_WIDTH-1:0]    m_axi_wdata [AXI_NUM_BANKS],
-    output wire [AXI_DATA_WIDTH/8-1:0]  m_axi_wstrb [AXI_NUM_BANKS],
-    output wire                         m_axi_wlast [AXI_NUM_BANKS],
-
-    // AXI write response channel
-    input wire                          m_axi_bvalid [AXI_NUM_BANKS],
-    output wire                         m_axi_bready [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_bid [AXI_NUM_BANKS],
-    input wire [1:0]                    m_axi_bresp [AXI_NUM_BANKS],
-
-    // AXI read request channel
-    output wire                         m_axi_arvalid [AXI_NUM_BANKS],
-    input wire                          m_axi_arready [AXI_NUM_BANKS],
-    output wire [AXI_ADDR_WIDTH-1:0]    m_axi_araddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_arid [AXI_NUM_BANKS],
-    output wire [7:0]                   m_axi_arlen [AXI_NUM_BANKS],
-    output wire [2:0]                   m_axi_arsize [AXI_NUM_BANKS],
-    output wire [1:0]                   m_axi_arburst [AXI_NUM_BANKS],
-    output wire [1:0]                   m_axi_arlock [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_arcache [AXI_NUM_BANKS],
-    output wire [2:0]                   m_axi_arprot [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_arqos [AXI_NUM_BANKS],
-    output wire [3:0]                   m_axi_arregion [AXI_NUM_BANKS],
-
-    // AXI read response channel
-    input wire                          m_axi_rvalid [AXI_NUM_BANKS],
-    output wire                         m_axi_rready [AXI_NUM_BANKS],
-    input wire [AXI_DATA_WIDTH-1:0]     m_axi_rdata [AXI_NUM_BANKS],
-    input wire                          m_axi_rlast [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_rid [AXI_NUM_BANKS],
-    input wire [1:0]                    m_axi_rresp [AXI_NUM_BANKS],
-
-    // DCR write request
-    input  wire                         dcr_wr_valid,
-    input  wire [`VX_DCR_ADDR_WIDTH-1:0] dcr_wr_addr,
-    input  wire [`VX_DCR_DATA_WIDTH-1:0] dcr_wr_data,
-
-    // Status
-    output wire                         busy
+    // AXI master interface
+    output wire [AXI_ADDR_WIDTH-1:0] axi_awaddr,
+    output wire [AXI_TID_WIDTH-1:0]  axi_awid,
+    output wire                      axi_awvalid,
+    input  wire                      axi_awready,
+    output wire [AXI_DATA_WIDTH-1:0] axi_wdata,
+    output wire [AXI_DATA_WIDTH/8-1:0] axi_wstrb,
+    output wire                      axi_wvalid,
+    input  wire                      axi_wready,
+    input  wire                      axi_bvalid,
+    output wire                      axi_bready,
+    output wire [AXI_ADDR_WIDTH-1:0] axi_araddr,
+    output wire [AXI_TID_WIDTH-1:0]  axi_arid,
+    output wire                      axi_arvalid,
+    input  wire                      axi_arready,
+    input  wire [AXI_DATA_WIDTH-1:0] axi_rdata,
+    input  wire                      axi_rvalid,
+    output wire                      axi_rready
 );
-    localparam DST_LDATAW = `CLOG2(AXI_DATA_WIDTH);
-    localparam SRC_LDATAW = `CLOG2(`VX_MEM_DATA_WIDTH);
-    localparam SUB_LDATAW = DST_LDATAW - SRC_LDATAW;
-    localparam VX_MEM_TAG_A_WIDTH  = `VX_MEM_TAG_WIDTH + `MAX(SUB_LDATAW, 0);
-    localparam VX_MEM_ADDR_A_WIDTH = `VX_MEM_ADDR_WIDTH - SUB_LDATAW;
 
-    wire                            mem_req_valid;
-    wire                            mem_req_rw;
-    wire [`VX_MEM_BYTEEN_WIDTH-1:0] mem_req_byteen;
-    wire [`VX_MEM_ADDR_WIDTH-1:0]   mem_req_addr;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   mem_req_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    mem_req_tag;
-    wire                            mem_req_ready;
+// Signals for HPDcache interface
+wire hpd_req_valid, hpd_req_ready;
+wire [MEM_ADDR_WIDTH-1:0] hpd_req_addr;
+wire [MEM_DATA_WIDTH-1:0] hpd_req_data;
+wire [MEM_LINE_SIZE-1:0]  hpd_req_byteen;
+wire hpd_req_rw;
+wire [MEM_TAG_WIDTH-1:0]  hpd_req_tag;
 
-    wire                            mem_rsp_valid;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   mem_rsp_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    mem_rsp_tag;
-    wire                            mem_rsp_ready;
+wire hpd_rsp_valid, hpd_rsp_ready;
+wire [MEM_DATA_WIDTH-1:0] hpd_rsp_data;
+wire [MEM_TAG_WIDTH-1:0]  hpd_rsp_tag;
 
-    `SCOPE_IO_SWITCH (1);
+// Instantiate memory adapter
+VX_mem_adapter #(
+    .MEM_ADDR_WIDTH (MEM_ADDR_WIDTH),
+    .MEM_DATA_WIDTH (MEM_DATA_WIDTH),
+    .MEM_LINE_SIZE  (MEM_LINE_SIZE),
+    .MEM_TAG_WIDTH  (MEM_TAG_WIDTH)
+) mem_adapter (
+    .clk            (clk),
+    .reset          (reset),
+    .mem_req_valid  (mem_req_valid),
+    .mem_req_ready  (mem_req_ready),
+    .mem_req_rw     (mem_req_rw),
+    .mem_req_addr   (mem_req_addr),
+    .mem_req_byteen (mem_req_byteen),
+    .mem_req_data   (mem_req_data),
+    .mem_req_tag    (mem_req_tag),
+    .mem_rsp_valid  (hpd_req_valid),
+    .mem_rsp_ready  (hpd_req_ready),
+    .mem_rsp_data   (hpd_req_data),
+    .mem_rsp_tag    (hpd_req_tag)
+);
 
-    Vortex vortex (
-        `SCOPE_IO_BIND  (0)
+// Instantiate HPDcache
+VX_hpdcache #(
+    .MEM_ADDR_WIDTH (MEM_ADDR_WIDTH),
+    .MEM_DATA_WIDTH (MEM_DATA_WIDTH),
+    .MEM_LINE_SIZE  (MEM_LINE_SIZE),
+    .MEM_TAG_WIDTH  (MEM_TAG_WIDTH)
+) hpd_cache (
+    .clk            (clk),
+    .reset          (reset),
+    .core_req_valid (hpd_req_valid),
+    .core_req_ready (hpd_req_ready),
+    .core_req_addr  (hpd_req_addr),
+    .core_req_rw    (hpd_req_rw),
+    .core_req_data  (hpd_req_data),
+    .core_req_byteen(hpd_req_byteen),
+    .core_req_tag   (hpd_req_tag),
+    .core_rsp_valid (hpd_rsp_valid),
+    .core_rsp_ready (hpd_rsp_ready),
+    .core_rsp_data  (hpd_rsp_data),
+    .core_rsp_tag   (hpd_rsp_tag)
+);
 
-        .clk            (clk),
-        .reset          (reset),
-
-        .mem_req_valid  (mem_req_valid),
-        .mem_req_rw     (mem_req_rw),
-        .mem_req_byteen (mem_req_byteen),
-        .mem_req_addr   (mem_req_addr),
-        .mem_req_data   (mem_req_data),
-        .mem_req_tag    (mem_req_tag),
-        .mem_req_ready  (mem_req_ready),
-
-        .mem_rsp_valid  (mem_rsp_valid),
-        .mem_rsp_data   (mem_rsp_data),
-        .mem_rsp_tag    (mem_rsp_tag),
-        .mem_rsp_ready  (mem_rsp_ready),
-
-        .dcr_wr_valid   (dcr_wr_valid),
-        .dcr_wr_addr    (dcr_wr_addr),
-        .dcr_wr_data    (dcr_wr_data),
-
-        .busy           (busy)
-    );
-
-    wire                            mem_req_valid_a;
-    wire                            mem_req_rw_a;
-    wire [(AXI_DATA_WIDTH/8)-1:0]   mem_req_byteen_a;
-    wire [VX_MEM_ADDR_A_WIDTH-1:0]  mem_req_addr_a;
-    wire [AXI_DATA_WIDTH-1:0]       mem_req_data_a;
-    wire [VX_MEM_TAG_A_WIDTH-1:0]   mem_req_tag_a;
-    wire                            mem_req_ready_a;
-
-    wire                            mem_rsp_valid_a;
-    wire [AXI_DATA_WIDTH-1:0]       mem_rsp_data_a;
-    wire [VX_MEM_TAG_A_WIDTH-1:0]   mem_rsp_tag_a;
-    wire                            mem_rsp_ready_a;
-
-    VX_mem_adapter #(
-        .SRC_DATA_WIDTH (`VX_MEM_DATA_WIDTH),
-        .DST_DATA_WIDTH (AXI_DATA_WIDTH),
-        .SRC_ADDR_WIDTH (`VX_MEM_ADDR_WIDTH),
-        .DST_ADDR_WIDTH (VX_MEM_ADDR_A_WIDTH),
-        .SRC_TAG_WIDTH  (`VX_MEM_TAG_WIDTH),
-        .DST_TAG_WIDTH  (VX_MEM_TAG_A_WIDTH),
-        .REQ_OUT_BUF    (0),
-        .RSP_OUT_BUF    (0)
-    ) mem_adapter (
-        .clk                (clk),
-        .reset              (reset),
-
-        .mem_req_valid_in   (mem_req_valid),
-        .mem_req_addr_in    (mem_req_addr),
-        .mem_req_rw_in      (mem_req_rw),
-        .mem_req_byteen_in  (mem_req_byteen),
-        .mem_req_data_in    (mem_req_data),
-        .mem_req_tag_in     (mem_req_tag),
-        .mem_req_ready_in   (mem_req_ready),
-
-        .mem_rsp_valid_in   (mem_rsp_valid),
-        .mem_rsp_data_in    (mem_rsp_data),
-        .mem_rsp_tag_in     (mem_rsp_tag),
-        .mem_rsp_ready_in   (mem_rsp_ready),
-
-        .mem_req_valid_out  (mem_req_valid_a),
-        .mem_req_addr_out   (mem_req_addr_a),
-        .mem_req_rw_out     (mem_req_rw_a),
-        .mem_req_byteen_out (mem_req_byteen_a),
-        .mem_req_data_out   (mem_req_data_a),
-        .mem_req_tag_out    (mem_req_tag_a),
-        .mem_req_ready_out  (mem_req_ready_a),
-
-        .mem_rsp_valid_out  (mem_rsp_valid_a),
-        .mem_rsp_data_out   (mem_rsp_data_a),
-        .mem_rsp_tag_out    (mem_rsp_tag_a),
-        .mem_rsp_ready_out  (mem_rsp_ready_a)
-    );
-
-    VX_axi_adapter #(
-        .DATA_WIDTH     (AXI_DATA_WIDTH),
-        .ADDR_WIDTH_IN  (VX_MEM_ADDR_A_WIDTH),
-        .ADDR_WIDTH_OUT (AXI_ADDR_WIDTH),
-        .TAG_WIDTH_IN   (VX_MEM_TAG_A_WIDTH),
-        .TAG_WIDTH_OUT  (AXI_TID_WIDTH),
-        .NUM_BANKS      (AXI_NUM_BANKS),
-        .BANK_INTERLEAVE(0),
-        .RSP_OUT_BUF    ((AXI_NUM_BANKS > 1) ? 2 : 0)
-    ) axi_adapter (
-        .clk            (clk),
-        .reset          (reset),
-
-        .mem_req_valid  (mem_req_valid_a),
-        .mem_req_rw     (mem_req_rw_a),
-        .mem_req_byteen (mem_req_byteen_a),
-        .mem_req_addr   (mem_req_addr_a),
-        .mem_req_data   (mem_req_data_a),
-        .mem_req_tag    (mem_req_tag_a),
-        .mem_req_ready  (mem_req_ready_a),
-
-        .mem_rsp_valid  (mem_rsp_valid_a),
-        .mem_rsp_data   (mem_rsp_data_a),
-        .mem_rsp_tag    (mem_rsp_tag_a),
-        .mem_rsp_ready  (mem_rsp_ready_a),
-
-        .m_axi_awvalid  (m_axi_awvalid),
-        .m_axi_awready  (m_axi_awready),
-        .m_axi_awaddr   (m_axi_awaddr),
-        .m_axi_awid     (m_axi_awid),
-        .m_axi_awlen    (m_axi_awlen),
-        .m_axi_awsize   (m_axi_awsize),
-        .m_axi_awburst  (m_axi_awburst),
-        .m_axi_awlock   (m_axi_awlock),
-        .m_axi_awcache  (m_axi_awcache),
-        .m_axi_awprot   (m_axi_awprot),
-        .m_axi_awqos    (m_axi_awqos),
-        .m_axi_awregion (m_axi_awregion),
-
-        .m_axi_wvalid   (m_axi_wvalid),
-        .m_axi_wready   (m_axi_wready),
-        .m_axi_wdata    (m_axi_wdata),
-        .m_axi_wstrb    (m_axi_wstrb),
-        .m_axi_wlast    (m_axi_wlast),
-
-        .m_axi_bvalid   (m_axi_bvalid),
-        .m_axi_bready   (m_axi_bready),
-        .m_axi_bid      (m_axi_bid),
-        .m_axi_bresp    (m_axi_bresp),
-
-        .m_axi_arvalid  (m_axi_arvalid),
-        .m_axi_arready  (m_axi_arready),
-        .m_axi_araddr   (m_axi_araddr),
-        .m_axi_arid     (m_axi_arid),
-        .m_axi_arlen    (m_axi_arlen),
-        .m_axi_arsize   (m_axi_arsize),
-        .m_axi_arburst  (m_axi_arburst),
-        .m_axi_arlock   (m_axi_arlock),
-        .m_axi_arcache  (m_axi_arcache),
-        .m_axi_arprot   (m_axi_arprot),
-        .m_axi_arqos    (m_axi_arqos),
-        .m_axi_arregion (m_axi_arregion),
-
-        .m_axi_rvalid   (m_axi_rvalid),
-        .m_axi_rready   (m_axi_rready),
-        .m_axi_rdata    (m_axi_rdata),
-        .m_axi_rlast    (m_axi_rlast),
-        .m_axi_rid      (m_axi_rid),
-        .m_axi_rresp    (m_axi_rresp)
-    );
+// Instantiate AXI adapter
+VX_axi_adapter #(
+    .AXI_DATA_WIDTH (AXI_DATA_WIDTH),
+    .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+    .AXI_TID_WIDTH  (AXI_TID_WIDTH),
+    .MEM_LINE_SIZE  (MEM_LINE_SIZE),
+    .MEM_ADDR_WIDTH (MEM_ADDR_WIDTH),
+    .MEM_DATA_WIDTH (MEM_DATA_WIDTH),
+    .MEM_TAG_WIDTH  (MEM_TAG_WIDTH)
+) axi_adapter (
+    .clk            (clk),
+    .reset          (reset),
+    .mem_req_valid  (hpd_rsp_valid),
+    .mem_req_ready  (hpd_rsp_ready),
+    .mem_req_addr   (hpd_req_addr),
+    .mem_req_rw     (hpd_req_rw),
+    .mem_req_data   (hpd_req_data),
+    .mem_req_byteen (hpd_req_byteen),
+    .mem_req_tag    (hpd_req_tag),
+    .mem_rsp_valid  (mem_rsp_valid),
+    .mem_rsp_ready  (mem_rsp_ready),
+    .mem_rsp_data   (mem_rsp_data),
+    .mem_rsp_tag    (mem_rsp_tag),
+    .axi_awaddr     (axi_awaddr),
+    .axi_awid       (axi_awid),
+    .axi_awvalid    (axi_awvalid),
+    .axi_awready    (axi_awready),
+    .axi_wdata      (axi_wdata),
+    .axi_wstrb      (axi_wstrb),
+    .axi_wvalid     (axi_wvalid),
+    .axi_wready     (axi_wready),
+    .axi_bvalid     (axi_bvalid),
+    .axi_bready     (axi_bready),
+    .axi_araddr     (axi_araddr),
+    .axi_arid       (axi_arid),
+    .axi_arvalid    (axi_arvalid),
+    .axi_arready    (axi_arready),
+    .axi_rdata      (axi_rdata),
+    .axi_rvalid     (axi_rvalid),
+    .axi_rready     (axi_rready)
+);
 
 endmodule
