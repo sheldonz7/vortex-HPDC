@@ -12,8 +12,12 @@
 // limitations under the License.
 
 `include "VX_cache_define.vh"
+`include "hpdcache_typedef.svh"
 
-module VX_hpdcache import VX_gpu_pkg::*; #(
+module VX_hpdcache
+    import VX_gpu_pkg::*;
+    import hpdcache_pkg::*; 
+#(
     parameter `STRING INSTANCE_ID   = "",
 
     // Number of Word requests per cycle
@@ -82,6 +86,16 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     `STATIC_ASSERT(WRITE_ENABLE || !WRITEBACK, ("invalid parameter: writeback requires write enable"))
     `STATIC_ASSERT(WRITEBACK || !DIRTY_BYTES, ("invalid parameter: dirty bytes require writeback"))
 
+  function int unsigned __minu(int unsigned x, int unsigned y);
+    return x < y ? x : y;
+  endfunction
+
+  function int unsigned __maxu(int unsigned x, int unsigned y);
+    return y < x ? x : y;
+  endfunction
+
+
+
     localparam REQ_SEL_WIDTH   = `UP(`CS_REQ_SEL_BITS);
     localparam WORD_SEL_WIDTH  = `UP(`CS_WORD_SEL_BITS);
     localparam MSHR_ADDR_WIDTH = `LOG2UP(MSHR_SIZE);
@@ -112,20 +126,24 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     // if write buffer is currently empty
     logic wbuffer_empty_o;
 
-    // whether
+    // if there is flush request
+    logic [NUM_REQS-1:0] flush_req_valid;
     logic dcache_flush;
 
+    // one or more of the requesters issue a flush request
+    assign dcache_flush = flush_req_valid != 0;
+    
+    
+    // VX_mem_bus_if #(
+    //     .DATA_SIZE (WORD_SIZE),
+    //     .TAG_WIDTH (TAG_WIDTH)
+    // ) core_bus2_if[NUM_REQS]();
 
-    VX_mem_bus_if #(
-        .DATA_SIZE (WORD_SIZE),
-        .TAG_WIDTH (TAG_WIDTH)
-    ) core_bus2_if[NUM_REQS]();
+    // wire [NUM_BANKS-1:0] per_bank_flush_begin;
+    // wire [`UP(UUID_WIDTH)-1:0] flush_uuid;
+    // wire [NUM_BANKS-1:0] per_bank_flush_end;
 
-    wire [NUM_BANKS-1:0] per_bank_flush_begin;
-    wire [`UP(UUID_WIDTH)-1:0] flush_uuid;
-    wire [NUM_BANKS-1:0] per_bank_flush_end;
-
-    wire [NUM_BANKS-1:0] per_bank_core_req_fire;
+    // wire [NUM_BANKS-1:0] per_bank_core_req_fire;
 
     // VX_mem_bus_if #(
     //     .DATA_SIZE (LINE_SIZE),
@@ -234,8 +252,10 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     wire [`PERF_CTR_BITS-1:0] perf_collisions;
 `endif
 
+ `include "hpdcache_typedef.svh"
 
 
+localparam int HPDCACHE_NREQUESTERS = NUM_REQS;   // number of hpdcache port == Vortex number of word requests every cycle
 
 // hpcache
     localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
@@ -325,7 +345,6 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
     // if adapter for load/store core request/response
 
-    localparam int HPDCACHE_NREQUESTERS = NUM_REQS;   // number of hpdcache port == Vortex number of word requests every cycle
 
     // hardware prefetcher
     typedef logic [63:0] hwpf_stride_param_t;
@@ -340,14 +359,14 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     hpdcache_rsp_t               dcache_rsp      [HPDCACHE_NREQUESTERS];
     logic                        dcache_read_miss, dcache_write_miss;
 
-    logic dcache_enable_i;
+    logic dcache_enable;
 
     // turn on by default
-    assign dcache_enable_i = 1'b1;
+    assign dcache_enable = 1'b1;
 
 
     generate
-        for (genvar r = 0; r < NUM_REQS; ++i) begin : gen_vx_hpdcache_if_adapter
+        for (genvar r = 0; r < NUM_REQS; ++r) begin : gen_vx_hpdcache_if_adapter
             VX_hpdcache_core_if_adapter #(
             // .CVA6Cfg              (CVA6Cfg),
             .HPDcacheCfg          (HPDcacheCfg),
@@ -359,13 +378,19 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
             //.dcache_req_i_t       (dcache_req_i_t),
             //.dcache_req_o_t       (dcache_req_o_t),
             // .is_load_port         (1'b1)
+            .CACHE_SIZE           (CACHE_SIZE),
+            .LINE_SIZE            (LINE_SIZE),
+            .NUM_BANKS            (NUM_BANKS),
+            .NUM_WAYS             (NUM_WAYS),
+            .WORD_SIZE            (WORD_SIZE)
         ) i_vx_hpdcache_if_adapter (
-            .clk_i,
-            .rst_ni,
+            .clk(clk),
+            .reset(reset),
 
-            .hpdcache_req_sid_i(hpdcache_req_sid(r)),
+            .hpdcache_req_sid_i(hpdcache_req_sid_t'(r)),
 
-            .vx_core_bus     (core_bus_if [i]),
+            .flush_op_o        (flush_req_valid[r]),
+            .vx_core_bus     (core_bus_if [r]),
                                 
             .hpdcache_req_valid(dcache_req_valid[r]),
             .hpdcache_req_ready(dcache_req_ready[r]),
@@ -409,40 +434,40 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
     logic                 dcache_write_resp_valid;
     hpdcache_mem_resp_w_t dcache_write_resp;
 
-    vx_hpdcache_mem_if_adapter #(
-        .hpdcache_mem_id_t    (hpdcache_mem_id_t),
-        .hpdcache_mem_req_t   (hpdcache_mem_req_t),
-        .hpdcache_mem_req_w_t (hpdcache_mem_req_w_t),
-        .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
-        .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
-    ) i_vx_hpdcache_mem_if_adapter (
-        .clk_i,
-        .rst_ni,
+    // vx_hpdcache_mem_if_adapter #(
+    //     .hpdcache_mem_id_t    (hpdcache_mem_id_t),
+    //     .hpdcache_mem_req_t   (hpdcache_mem_req_t),
+    //     .hpdcache_mem_req_w_t (hpdcache_mem_req_w_t),
+    //     .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+    //     .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
+    // ) i_vx_hpdcache_mem_if_adapter (
+    //     .clk_i,
+    //     .rst_ni,
 
-        // memory request signals
-        .mem_bus_if    (mem_bus_if),
+    //     // memory request signals
+    //     .mem_bus_if    (mem_bus_if),
 
-        .mem_req_read_ready(dcache_read_ready),
-        .mem_req_read_valid(dcache_read_valid),
-        .mem_req_read      (dcache_read),
+    //     .mem_req_read_ready(dcache_read_ready),
+    //     .mem_req_read_valid(dcache_read_valid),
+    //     .mem_req_read      (dcache_read),
 
-        .mem_resp_read_ready(dcache_read_resp_ready),
-        .mem_resp_read_valid(dcache_read_resp_valid),
-        .mem_resp_read      (dcache_read_resp),
+    //     .mem_resp_read_ready(dcache_read_resp_ready),
+    //     .mem_resp_read_valid(dcache_read_resp_valid),
+    //     .mem_resp_read      (dcache_read_resp),
 
-        .mem_req_write_ready(dcache_write_ready),
-        .mem_req_write_valid(dcache_write_valid),
-        .mem_req_write      (dcache_write),
+    //     .mem_req_write_ready(dcache_write_ready),
+    //     .mem_req_write_valid(dcache_write_valid),
+    //     .mem_req_write      (dcache_write),
 
-        .mem_req_write_data_ready(dcache_write_data_ready),
-        .mem_req_write_data_valid(dcache_write_data_valid),
-        .mem_req_write_data      (dcache_write_data),
+    //     .mem_req_write_data_ready(dcache_write_data_ready),
+    //     .mem_req_write_data_valid(dcache_write_data_valid),
+    //     .mem_req_write_data      (dcache_write_data),
 
-        .mem_resp_write_ready(dcache_write_resp_ready),
-        .mem_resp_write_valid(dcache_write_resp_valid),
-        .mem_resp_write      (dcache_write_resp),
+    //     .mem_resp_write_ready(dcache_write_resp_ready),
+    //     .mem_resp_write_valid(dcache_write_resp_valid),
+    //     .mem_resp_write      (dcache_write_resp),
 
-    );
+    // );
 
     hpdcache #(
       .HPDcacheCfg          (HPDcacheCfg),
@@ -466,10 +491,10 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
       .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
       .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t)
     ) i_hpdcache (
-      .clk_i,
-      .rst_ni,
+      .clk_i(clk),
+      .rst_ni(reset),
 
-      .wbuf_flush_i(dcache_flush_i),
+      .wbuf_flush_i(dcache_flush),
 
       .core_req_valid_i(dcache_req_valid),
       .core_req_ready_o(dcache_req_ready),
@@ -515,7 +540,7 @@ module VX_hpdcache import VX_gpu_pkg::*; #(
 
       .wbuf_empty_o(wbuffer_empty_o),
 
-      .cfg_enable_i                       (dcache_enable_i),
+      .cfg_enable_i                       (dcache_enable),
       .cfg_wbuf_threshold_i               (3'd2),
       .cfg_wbuf_reset_timecnt_on_write_i  (1'b1),
       .cfg_wbuf_sequential_waw_i          (1'b0),

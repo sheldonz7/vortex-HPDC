@@ -74,8 +74,9 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
 
     // Memory request output buffer
     parameter MEM_OUT_BUF           = 3,
-
+    /* verilator lint_off UNUSED */
     parameter ENABLE_HPDCACHE       = 0
+    /* verilator lint_on UNUSED */
  ) (
 
     input wire clk,
@@ -166,7 +167,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
 
     if (PASSTHRU == 0) begin : g_cache
 
-        if (`HPDCACHE_ENABLED == 1) begin: g_hpdcache
+        if (ENABLE_HPDCACHE == 1) begin: g_hpdcache
         VX_hpdcache #(
             .INSTANCE_ID  (INSTANCE_ID),
             .CACHE_SIZE   (CACHE_SIZE),
@@ -187,8 +188,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .TAG_WIDTH    (TAG_WIDTH),
             .FLAGS_WIDTH  (FLAGS_WIDTH),
             .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
-            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF),
-            .ENABLE_HPDCACHE (ENABLE_HPDCACHE)
+            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
         ) cache (
             .clk            (clk),
             .reset          (reset),
@@ -219,8 +219,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .TAG_WIDTH    (TAG_WIDTH),
             .FLAGS_WIDTH  (FLAGS_WIDTH),
             .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
-            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF),
-            .ENABLE_HPDCACHE (ENABLE_HPDCACHE)
+            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
         ) cache (
             .clk            (clk),
             .reset          (reset),
@@ -230,7 +229,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .core_bus_if    (core_bus_cache_if),
             .mem_bus_if     (mem_bus_cache_if)
         );
-        end;
+       end;
     end else begin : g_passthru
 
         for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_bus_cache_if
@@ -287,7 +286,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
         end
     end
 
-    wire [`UP(UUID_WIDTH)-1:0] mem_req_uuid;
+  wire [`UP(UUID_WIDTH)-1:0] mem_req_uuid;
     wire [`UP(UUID_WIDTH)-1:0] mem_rsp_uuid;
 
     if ((UUID_WIDTH != 0) && (NC_OR_BYPASS != 0)) begin : g_mem_req_uuid

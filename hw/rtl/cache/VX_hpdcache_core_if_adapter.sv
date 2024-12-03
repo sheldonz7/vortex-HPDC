@@ -11,7 +11,7 @@
 
 `include "VX_cache_define.vh"
 
-module Vortex_hpdcache_core_if_adapter 
+module VX_hpdcache_core_if_adapter 
 #(
     parameter hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = '0,
     parameter type hpdcache_tag_t = logic,
@@ -19,18 +19,18 @@ module Vortex_hpdcache_core_if_adapter
     parameter type hpdcache_req_sid_t = logic,
     parameter type hpdcache_req_t = logic,
     parameter type hpdcache_rsp_t = logic,
-    parameter type dcache_req_i_t = logic,
-    parameter type dcache_req_o_t = logic,
-
-    parameter REQ_DATA_SIZE = 16,
-    parameter ADDR_WIDTH = `MEM_ADDR_WIDTH,
-    parameter DATA_WIDTH = `XLEN,
-    parameter TAG_WIDTH = 8,
-    parameter UUID_WIDTH = `UUID_WIDTH,
-    parameter NUM_REQS = 4,
-    parameter PASSTHRU = 0,           // Passthrough: bypasses cache for all requests
-    parameter NC_ENABLE = 1,           // Enables bypass for non-cacheable requests only
-    parameter WRITEBACK = 0
+    // Size of cache in bytes
+    parameter CACHE_SIZE            = 32768,
+    // Size of line inside a bank in bytes
+    parameter LINE_SIZE             = 64,
+    // Number of banks
+    parameter NUM_BANKS             = 4,
+    // Number of associative ways
+    parameter NUM_WAYS              = 4,
+    // Size of a word in bytes
+    parameter WORD_SIZE             = 16
+    // parameter type dcache_req_i_t = logic,
+    // parameter type dcache_req_o_t = logic
 ) (
     // Clock and Reset
     input wire clk,
@@ -63,20 +63,21 @@ module Vortex_hpdcache_core_if_adapter
     // input wire [TAG_WIDTH-1:0] hpdcache_rsp_tag,
     // input wire hpdcache_req_ready,
 
-    output logic                        dcache_req_valid;
-    input logic                        dcache_req_ready;
-    output hpdcache_req_t               dcache_req     ;
-    output logic                        dcache_req_abort;
-    output hpdcache_tag_t               dcache_req_tag  ;
-    output hpdcache_pkg::hpdcache_pma_t dcache_req_pma  ;
+    output logic                        hpdcache_req_valid,
+    input logic                        hpdcache_req_ready,
+    output hpdcache_req_t               hpdcache_req     ,
+    output logic                        hpdcache_req_abort,
+    output hpdcache_tag_t               hpdcache_req_tag  ,
+    output hpdcache_pkg::hpdcache_pma_t hpdcache_req_pma  ,
     
-    input logic                        dcache_rsp_valid;
-    input hpdcache_rsp_t               dcache_rsp    ;
+    input logic                        hpdcache_rsp_valid,
+    input hpdcache_rsp_t               hpdcache_rsp   
 
 );
     logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1:0] word_addr_no_tag;
-    logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1+`CLOG2(REQ_DATA_SIZE):0] byte_addr_no_tag;
-    
+    logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1+`CLOG2(WORD_SIZE):0] byte_addr_no_tag;
+    logic [`CS_TAG_SEL_BITS-1:0] addr_tag;
+
     wire flush_op;
     wire cmo_operation;
 
@@ -90,7 +91,7 @@ module Vortex_hpdcache_core_if_adapter
     // generate byte address from word address and remove tag bits    
     assign word_addr_no_tag = `CS_WORD_ADDR_NO_TAG(vx_core_bus.req_data.addr);
     
-    assign byte_addr_no_tag = word_addr_no_tag <<`CLOG2(REQ_DATA_SIZE); // core request is the word address, shift by
+    assign byte_addr_no_tag = word_addr_no_tag <<`CLOG2(WORD_SIZE); // core request is the word address, shift by
   
 
 
@@ -112,7 +113,7 @@ module Vortex_hpdcache_core_if_adapter
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
     assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_LOAD : hpdcache_pkg::HPDCACHE_REQ_STORE);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
-    assign hpdcache_req.size = `CLOG2(DATA_SIZE); // always full word access
+    assign hpdcache_req.size = `CLOG2(WORD_SIZE); // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
     assign hpdcache_req.tid = vx_core_bus.req_data.tag;
     assign hpdcache_req.need_rsp = cmo_operation ? 1'b1 : (vx_core_bus.req_data.rw ? 1'b1 : 1'b0);
@@ -120,13 +121,13 @@ module Vortex_hpdcache_core_if_adapter
     assign hpdcache_req.addr_tag = addr_tag;
     assign hpdcache_req.pma.uncacheable = 1'b0;
     assign hpdcache_req.pma.io = 1'b0;
-    assign hpdcache_req.pma.wr_policy_hint = WRITEBACK ? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
+    assign hpdcache_req.pma.wr_policy_hint = HPDcacheCfg.wbEn ? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
     
     assign hpdcache_req.abort = '0; // unused on Vortex
-    assign hpdcache_req_tag_o = '0; // unused on physically indexed request
-    assign hpdcache_req_pma_o.uncacheable = 1'b0;    // unused on Vortex yet
-    assign hpdcache_req_pma_o.io = 1'b0;
-    assign hpdcache_req_pma_o.wr_policy_hint = '0;  // unused on Vortex yet, only for virtual index
+    assign hpdcache_req_tag = '0; // unused on physically indexed request
+    assign hpdcache_req_pma.uncacheable = 1'b0;    // unused on Vortex yet
+    assign hpdcache_req_pma.io = 1'b0;
+    assign hpdcache_req_pma.wr_policy_hint = '0;  // unused on Vortex yet, only for virtual index
 
 
     // // Response Path
