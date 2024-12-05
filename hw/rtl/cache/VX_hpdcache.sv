@@ -583,74 +583,74 @@ localparam int HPDCACHE_NREQUESTERS = NUM_REQS;   // number of hpdcache port == 
     //     assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
     // end
 
-`ifdef PERF_ENABLE
-    // per cycle: core_reads, core_writes
-    wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_reads_per_cycle;
-    wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_writes_per_cycle;
+// `ifdef PERF_ENABLE
+//     // per cycle: core_reads, core_writes
+//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_reads_per_cycle;
+//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_writes_per_cycle;
 
-    wire [NUM_REQS-1:0] perf_core_reads_per_req;
-    wire [NUM_REQS-1:0] perf_core_writes_per_req;
+//     wire [NUM_REQS-1:0] perf_core_reads_per_req;
+//     wire [NUM_REQS-1:0] perf_core_writes_per_req;
 
-    // per cycle: read misses, write misses, msrq stalls, pipeline stalls
-    wire [`CLOG2(NUM_BANKS+1)-1:0] perf_read_miss_per_cycle;
-    wire [`CLOG2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
-    wire [`CLOG2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
-    wire [`CLOG2(NUM_REQS+1)-1:0] perf_crsp_stall_per_cycle;
+//     // per cycle: read misses, write misses, msrq stalls, pipeline stalls
+//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_read_miss_per_cycle;
+//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
+//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
+//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_crsp_stall_per_cycle;
 
-    `BUFFER(perf_core_reads_per_req, core_req_valid & core_req_ready & ~core_req_rw);
-    `BUFFER(perf_core_writes_per_req, core_req_valid & core_req_ready & core_req_rw);
+//     `BUFFER(perf_core_reads_per_req, core_req_valid & core_req_ready & ~core_req_rw);
+//     `BUFFER(perf_core_writes_per_req, core_req_valid & core_req_ready & core_req_rw);
 
-    `POP_COUNT(perf_core_reads_per_cycle, perf_core_reads_per_req);
-    `POP_COUNT(perf_core_writes_per_cycle, perf_core_writes_per_req);
-    `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
-    `POP_COUNT(perf_write_miss_per_cycle, perf_write_miss_per_bank);
-    `POP_COUNT(perf_mshr_stall_per_cycle, perf_mshr_stall_per_bank);
+//     `POP_COUNT(perf_core_reads_per_cycle, perf_core_reads_per_req);
+//     `POP_COUNT(perf_core_writes_per_cycle, perf_core_writes_per_req);
+//     `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
+//     `POP_COUNT(perf_write_miss_per_cycle, perf_write_miss_per_bank);
+//     `POP_COUNT(perf_mshr_stall_per_cycle, perf_mshr_stall_per_bank);
 
-    wire [NUM_REQS-1:0] perf_crsp_stall_per_req;
-    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_perf_crsp_stall_per_req
-        assign perf_crsp_stall_per_req[i] = core_bus2_if[i].rsp_valid && ~core_bus2_if[i].rsp_ready;
-    end
+//     wire [NUM_REQS-1:0] perf_crsp_stall_per_req;
+//     for (genvar i = 0; i < NUM_REQS; ++i) begin : g_perf_crsp_stall_per_req
+//         assign perf_crsp_stall_per_req[i] = core_bus2_if[i].rsp_valid && ~core_bus2_if[i].rsp_ready;
+//     end
 
-    `POP_COUNT(perf_crsp_stall_per_cycle, perf_crsp_stall_per_req);
+//     `POP_COUNT(perf_crsp_stall_per_cycle, perf_crsp_stall_per_req);
 
-    wire perf_mem_stall_per_cycle = mem_bus_if.req_valid && ~mem_bus_if.req_ready;
+//     wire perf_mem_stall_per_cycle = mem_bus_if.req_valid && ~mem_bus_if.req_ready;
 
-    reg [`PERF_CTR_BITS-1:0] perf_core_reads;
-    reg [`PERF_CTR_BITS-1:0] perf_core_writes;
-    reg [`PERF_CTR_BITS-1:0] perf_read_misses;
-    reg [`PERF_CTR_BITS-1:0] perf_write_misses;
-    reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
-    reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
-    reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
+//     reg [`PERF_CTR_BITS-1:0] perf_core_reads;
+//     reg [`PERF_CTR_BITS-1:0] perf_core_writes;
+//     reg [`PERF_CTR_BITS-1:0] perf_read_misses;
+//     reg [`PERF_CTR_BITS-1:0] perf_write_misses;
+//     reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
+//     reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
+//     reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
 
-    always @(posedge clk) begin
-        if (reset) begin
-            perf_core_reads   <= '0;
-            perf_core_writes  <= '0;
-            perf_read_misses  <= '0;
-            perf_write_misses <= '0;
-            perf_mshr_stalls  <= '0;
-            perf_mem_stalls   <= '0;
-            perf_crsp_stalls  <= '0;
-        end else begin
-            perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
-            perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
-            perf_read_misses  <= perf_read_misses  + `PERF_CTR_BITS'(perf_read_miss_per_cycle);
-            perf_write_misses <= perf_write_misses + `PERF_CTR_BITS'(perf_write_miss_per_cycle);
-            perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(perf_mshr_stall_per_cycle);
-            perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
-            perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
-        end
-    end
+//     always @(posedge clk) begin
+//         if (reset) begin
+//             perf_core_reads   <= '0;
+//             perf_core_writes  <= '0;
+//             perf_read_misses  <= '0;
+//             perf_write_misses <= '0;
+//             perf_mshr_stalls  <= '0;
+//             perf_mem_stalls   <= '0;
+//             perf_crsp_stalls  <= '0;
+//         end else begin
+//             perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
+//             perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
+//             perf_read_misses  <= perf_read_misses  + `PERF_CTR_BITS'(perf_read_miss_per_cycle);
+//             perf_write_misses <= perf_write_misses + `PERF_CTR_BITS'(perf_write_miss_per_cycle);
+//             perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(perf_mshr_stall_per_cycle);
+//             perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
+//             perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
+//         end
+//     end
 
-    assign cache_perf.reads        = perf_core_reads;
-    assign cache_perf.writes       = perf_core_writes;
-    assign cache_perf.read_misses  = perf_read_misses;
-    assign cache_perf.write_misses = perf_write_misses;
-    assign cache_perf.bank_stalls  = perf_collisions;
-    assign cache_perf.mshr_stalls  = perf_mshr_stalls;
-    assign cache_perf.mem_stalls   = perf_mem_stalls;
-    assign cache_perf.crsp_stalls  = perf_crsp_stalls;
-`endif
+//     assign cache_perf.reads        = perf_core_reads;
+//     assign cache_perf.writes       = perf_core_writes;
+//     assign cache_perf.read_misses  = perf_read_misses;
+//     assign cache_perf.write_misses = perf_write_misses;
+//     assign cache_perf.bank_stalls  = perf_collisions;
+//     assign cache_perf.mshr_stalls  = perf_mshr_stalls;
+//     assign cache_perf.mem_stalls   = perf_mem_stalls;
+//     assign cache_perf.crsp_stalls  = perf_crsp_stalls;
+// `endif
 
 endmodule
