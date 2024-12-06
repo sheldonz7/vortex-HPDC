@@ -104,33 +104,33 @@ module VX_axi_read_mem_arb #(
 
     assign req_valid_in[0] = m_axi_arvalid_0;
     assign req_data_in[0] = {
-        m_axi_araddr_0[0],
-        m_axi_arid_0[0],
-        m_axi_arlen_0[0],
-        m_axi_arsize_0[0],
-        m_axi_arburst_0[0],
-        m_axi_arlock_0[0],
-        m_axi_arcache_0[0],
-        m_axi_arprot_0[0],
-        m_axi_arqos_0[0],
-        m_axi_arregion_0[0]
+        m_axi_araddr_0,
+        m_axi_arid_0,
+        m_axi_arlen_0,
+        m_axi_arsize_0,
+        m_axi_arburst_0,
+        m_axi_arlock_0,
+        m_axi_arcache_0,
+        m_axi_arprot_0,
+        m_axi_arqos_0,
+        m_axi_arregion_0
     };
-    assign m_axi_arready_0[0] = req_ready_in[0];
+    assign m_axi_arready_0 = req_ready_in[0];
 
     assign req_valid_in[1] = m_axi_arvalid_1;
     assign req_data_in[1] = {
-        m_axi_araddr_1[0],
-        m_axi_arid_1[0],
-        m_axi_arlen_1[0],
-        m_axi_arsize_1[0],
-        m_axi_arburst_1[0],
-        m_axi_arlock_1[0],
-        m_axi_arcache_1[0],
-        m_axi_arprot_1[0],
-        m_axi_arqos_1[0],
-        m_axi_arregion_1[0]
+        m_axi_araddr_1,
+        m_axi_arid_1,
+        m_axi_arlen_1,
+        m_axi_arsize_1,
+        m_axi_arburst_1,
+        m_axi_arlock_1,
+        m_axi_arcache_1,
+        m_axi_arprot_1,
+        m_axi_arqos_1,
+        m_axi_arregion_1
     };
-    assign m_axi_arready_1[0] = req_ready_in[1];
+    assign m_axi_arready_1 = req_ready_in[1];
 
     VX_stream_arb #(
         .NUM_INPUTS  (NUM_INPUTS),
@@ -159,22 +159,22 @@ module VX_axi_read_mem_arb #(
         ) bits_insert (
             .data_in  (req_tag_out),
             .ins_in   (req_sel_out[i]),
-            .data_out (m_axi_arid[0])
+            .data_out (m_axi_arid)
         );
-        assign m_axi_arvalid[0] = req_valid_out[i];
+        assign m_axi_arvalid = req_valid_out[i];
         assign {
-            m_axi_araddr[0],
-            m_axi_arid[0],
-            m_axi_arlen[0],
-            m_axi_arsize[0],
-            m_axi_arburst[0],
-            m_axi_arlock[0],
-            m_axi_arcache[0],
-            m_axi_arprot[0],
-            m_axi_arqos[0],
-            m_axi_arregion[0]
+            m_axi_araddr,
+            m_axi_arid,
+            m_axi_arlen,
+            m_axi_arsize,
+            m_axi_arburst,
+            m_axi_arlock,
+            m_axi_arcache,
+            m_axi_arprot,
+            m_axi_arqos,
+            m_axi_arregion
         } = req_data_out[i];
-        assign req_ready_out[i] = m_axi_arready[0];
+        assign req_ready_out[i] = m_axi_arready;
     end
 
     ///////////////////////////////////////////////////////////////////////////
