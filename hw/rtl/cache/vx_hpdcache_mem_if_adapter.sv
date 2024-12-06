@@ -23,6 +23,8 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
     // VX_mem_bus_if parameters
     parameter DATA_SIZE = 1,  // Should match dcache data width
     parameter TAG_WIDTH = 1   // Should match dcache tag width
+
+    parameter NUM_OUTSTANDING_REQS = 1
 ) (
     input  logic                 clk,
     input  logic                 reset,
@@ -56,6 +58,8 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
     
     logic cur_req_state; // 0: take-read if there is, if only write come, take it next cycle, 1: take pending write, 
     logic next_req_state; // 0: take-read if there is, if only write come, take it next cycle, 1: take pending write,
+
+    logic [NUM_OUTSTANDING_REQS - 1 : 0] cur_req;
 
     // read/write req buffer
     // logic buffered_req_valid;
@@ -125,9 +129,9 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
 
 
     // Read Response
-    assign mem_resp_read_valid_i = mem_bus_if.rsp_valid ;
+    assign mem_resp_read_valid_i = cur_req[0] ? 1'b0 : mem_bus_if.rsp_valid;
 
-    assign mem_bus_if.rsp_ready = mem_resp_read_ready_o;
+    assign mem_bus_if.rsp_ready = cur_req[0] ? 1'b0 : mem_resp_read_ready_o;
 
     assign mem_resp_read_i.mem_resp_r_id = mem_bus_if.rsp_data.tag;
     assign mem_resp_read_i.mem_resp_r_data = mem_bus_if.rsp_data.data;
@@ -135,8 +139,16 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
     assign mem_resp_read_i.mem_resp_r_last = '0;
 
 
-    // Write Response
-    assign mem_resp_write_valid_i = mem_bus_if.rsp_valid;
+    // // Write Response
+    // assign mem_resp_write_valid_i = cur_req[0] ? mem_bus_if.rsp_valid : 1'b0;
+
+    // assign mem_bus_if.rsp_ready = mem_resp_write_ready_o;
+
+
+    // assign mem_resp_write_i.mem_resp_w_id = mem_bus_if.rsp_data.tag;
+    // assign mem_resp_write_i.mem_resp_w_error = '0;
+    // assign mem_resp_write_i.mem_resp_w_last = '0;
+
 
     // // control signals
     // always_ff
