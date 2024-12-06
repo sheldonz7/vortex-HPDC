@@ -1,12 +1,8 @@
 `include "VX_define.vh"
 
-module VX_axi_mem_arb #(
+module VX_axi_write_mem_arb #(
     parameter NUM_INPUTS     = 2,
     parameter NUM_OUTPUTS    = 1,
-    parameter DATA_SIZE      = 1,
-    parameter MEM_ADDR_WIDTH = `MEM_ADDR_WIDTH,
-    parameter ADDR_WIDTH     = (MEM_ADDR_WIDTH-`CLOG2(DATA_SIZE)),
-    parameter TAG_WIDTH      = 1,
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
     parameter RSP_OUT_BUF    = 0,
@@ -98,7 +94,7 @@ module VX_axi_mem_arb #(
     input wire                          m_axi_bvalid [AXI_NUM_BANKS],
     output wire                         m_axi_bready [AXI_NUM_BANKS],
     input wire [AXI_TID_WIDTH-1:0]      m_axi_bid [AXI_NUM_BANKS],
-    input wire [1:0]                    m_axi_bresp [AXI_NUM_BANKS],
+    input wire [1:0]                    m_axi_bresp [AXI_NUM_BANKS]
 
 );
     localparam DATA_WIDTH   = AXI_DATA_WIDTH;
@@ -245,14 +241,14 @@ module VX_axi_mem_arb #(
 
     assign m_axi_bvalid_0 = rsp_valid_out[0];
     assign {
-        m_axi_bid_0,
+        m_axi_bid_0
     } = rsp_data_out[0];
     assign rsp_ready_out[0] = m_axi_bready_0;
 
 
     assign m_axi_bvalid_1 = rsp_valid_out[1];
     assign {
-        m_axi_bid_1,
+        m_axi_bid_1
     } = rsp_data_out[1];
     assign rsp_ready_out[1] = m_axi_bready_1;
 
