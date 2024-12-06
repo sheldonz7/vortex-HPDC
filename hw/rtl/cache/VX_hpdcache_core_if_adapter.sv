@@ -28,7 +28,9 @@ module VX_hpdcache_core_if_adapter
     // Number of associative ways
     parameter NUM_WAYS              = 4,
     // Size of a word in bytes
-    parameter WORD_SIZE             = 16
+    parameter WORD_SIZE             = 16,
+
+    parameter WRITEBACK             = 0
     // parameter type dcache_req_i_t = logic,
     // parameter type dcache_req_o_t = logic
 ) (
@@ -116,12 +118,15 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req.size = `CLOG2(WORD_SIZE); // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
     assign hpdcache_req.tid = vx_core_bus.req_data.tag;
-    assign hpdcache_req.need_rsp = cmo_operation ? 1'b1 : (vx_core_bus.req_data.rw ? 1'b1 : 1'b0);
+    // memory request that need response: load(read), fence operation that is EOP (end of program) which is treated as read request
+    // memory request that does not need response: store(write)
+
+    assign hpdcache_req.need_rsp = vx_core_bus.req_data.rw ? 1'b0 : 1'b1;
     assign hpdcache_req.phys_indexed = 1'b1;
     assign hpdcache_req.addr_tag = addr_tag;
     assign hpdcache_req.pma.uncacheable = 1'b0;
     assign hpdcache_req.pma.io = 1'b0;
-    assign hpdcache_req.pma.wr_policy_hint = HPDcacheCfg.wbEn ? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
+    assign hpdcache_req.pma.wr_policy_hint = WRITEBACK? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
     
     assign hpdcache_req.abort = '0; // unused on Vortex
     assign hpdcache_req_tag = '0; // unused on physically indexed request

@@ -35,16 +35,16 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
     // read interface
     output logic                 mem_req_read_ready,
     input  logic                 mem_req_read_valid,
-    input  hpdcache_mem_req_t    mem_req_read_o,
+    input  hpdcache_mem_req_t    mem_req_read,
 
     input  logic                 mem_resp_read_ready,
     output logic                 mem_resp_read_valid,
-    output hpdcache_mem_resp_r_t mem_resp_read_i,
+    output hpdcache_mem_resp_r_t mem_resp_read,
 
     // write interface
     output logic                 mem_req_write_ready,
     input  logic                 mem_req_write_valid,
-    input  hpdcache_mem_req_t    mem_req_write_o,
+    input  hpdcache_mem_req_t    mem_req_write,
 
     output logic                 mem_req_write_data_ready,
     input  logic                 mem_req_write_data_valid,
@@ -129,14 +129,15 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
 
 
     // Read Response
-    assign mem_resp_read_valid_i = cur_req[0] ? 1'b0 : mem_bus_if.rsp_valid;
+    // only read requests need response
+    assign mem_resp_read_valid = mem_bus_if.rsp_valid;
 
-    assign mem_bus_if.rsp_ready = cur_req[0] ? 1'b0 : mem_resp_read_ready_o;
+    assign mem_bus_if.rsp_ready = mem_resp_read_ready;
 
-    assign mem_resp_read_i.mem_resp_r_id = mem_bus_if.rsp_data.tag;
-    assign mem_resp_read_i.mem_resp_r_data = mem_bus_if.rsp_data.data;
-    assign mem_resp_read_i.mem_resp_r_error = '0;
-    assign mem_resp_read_i.mem_resp_r_last = '0;
+    assign mem_resp_read.mem_resp_r_id = mem_bus_if.rsp_data.tag;
+    assign mem_resp_read.mem_resp_r_data = mem_bus_if.rsp_data.data;
+    assign mem_resp_read.mem_resp_r_error = '0;
+    assign mem_resp_read.mem_resp_r_last = '1;
 
 
     // // Write Response
