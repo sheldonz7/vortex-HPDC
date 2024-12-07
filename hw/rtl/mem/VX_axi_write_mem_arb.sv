@@ -194,7 +194,7 @@ module VX_axi_write_mem_arb #(
             m_axi_wvalid,
             m_axi_wdata,
             m_axi_wstrb,
-            m_axi_wlast,
+            m_axi_wlast
         } = req_data_out[i];
         assign req_ready_out[i] = m_axi_awready;
     end
