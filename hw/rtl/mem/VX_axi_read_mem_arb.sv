@@ -1,7 +1,7 @@
 `include "VX_define.vh"
 
 module VX_axi_read_mem_arb #(
-    parameter NUM_INPUTS     = 2,
+    parameter NUM_INPUTS     = 1,
     parameter NUM_OUTPUTS    = 1,
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
@@ -87,7 +87,7 @@ module VX_axi_read_mem_arb #(
 );
     localparam DATA_WIDTH   = AXI_DATA_WIDTH;
     localparam LOG_NUM_REQS = `ARB_SEL_BITS(NUM_INPUTS, NUM_OUTPUTS);
-    localparam REQ_DATAW    = 1+AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4;
+    localparam REQ_DATAW    = AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4;
     localparam RSP_DATAW    = AXI_DATA_WIDTH+1+AXI_TID_WIDTH;
 
     `STATIC_ASSERT ((NUM_INPUTS >= NUM_OUTPUTS), ("invalid parameter"))
@@ -163,7 +163,7 @@ module VX_axi_read_mem_arb #(
         assign m_axi_arvalid = req_valid_out[i];
         assign {
             m_axi_araddr,
-            m_axi_arid,
+            req_tag_out,
             m_axi_arlen,
             m_axi_arsize,
             m_axi_arburst,

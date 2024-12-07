@@ -1,7 +1,7 @@
 `include "VX_define.vh"
 
 module VX_axi_write_mem_arb #(
-    parameter NUM_INPUTS     = 2,
+    parameter NUM_INPUTS     = 1,
     parameter NUM_OUTPUTS    = 1,
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
@@ -98,7 +98,7 @@ module VX_axi_write_mem_arb #(
 );
     localparam DATA_WIDTH   = AXI_DATA_WIDTH;
     localparam LOG_NUM_REQS = `ARB_SEL_BITS(NUM_INPUTS, NUM_OUTPUTS);
-    localparam REQ_DATAW    = 1+AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4+1+AXI_DATA_WIDTH+(AXI_DATA_WIDTH/8)+1;
+    localparam REQ_DATAW    = AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4+1+AXI_DATA_WIDTH+(AXI_DATA_WIDTH/8)+1;
     localparam RSP_DATAW    = AXI_TID_WIDTH;
 
     `STATIC_ASSERT ((NUM_INPUTS >= NUM_OUTPUTS), ("invalid parameter"))
@@ -123,7 +123,11 @@ module VX_axi_write_mem_arb #(
         m_axi_awcache_0,
         m_axi_awprot_0,
         m_axi_awqos_0,
-        m_axi_awregion_0
+        m_axi_awregion_0,
+        m_axi_wvalid_0,
+        m_axi_wdata_0,
+        m_axi_wstrb_0,
+        m_axi_wlast_0
     };
     assign m_axi_awready_0 = req_ready_in[0];
 
@@ -138,7 +142,11 @@ module VX_axi_write_mem_arb #(
         m_axi_awcache_1,
         m_axi_awprot_1,
         m_axi_awqos_1,
-        m_axi_awregion_1
+        m_axi_awregion_1,
+        m_axi_wvalid_1,
+        m_axi_wdata_1,
+        m_axi_wstrb_1,
+        m_axi_wlast_1
     };
     assign m_axi_awready_1 = req_ready_in[1];
 
@@ -174,7 +182,7 @@ module VX_axi_write_mem_arb #(
         assign m_axi_awvalid = req_valid_out[i];
         assign {
             m_axi_awaddr,
-            m_axi_awid,
+            req_tag_out,
             m_axi_awlen,
             m_axi_awsize,
             m_axi_awburst,
@@ -182,7 +190,11 @@ module VX_axi_write_mem_arb #(
             m_axi_awcache,
             m_axi_awprot,
             m_axi_awqos,
-            m_axi_awregion
+            m_axi_awregion,
+            m_axi_wvalid,
+            m_axi_wdata,
+            m_axi_wstrb,
+            m_axi_wlast,
         } = req_data_out[i];
         assign req_ready_out[i] = m_axi_awready;
     end
