@@ -72,7 +72,7 @@ module VX_axi_write_mem_arb #(
     output wire                         m_axi_awvalid,
     input wire                          m_axi_awready,
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_awaddr,
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_awid,
+    output wire [AXI_TID_WIDTH:0]       m_axi_awid,
     output wire [7:0]                   m_axi_awlen,
     output wire [2:0]                   m_axi_awsize,
     output wire [1:0]                   m_axi_awburst,
@@ -92,7 +92,7 @@ module VX_axi_write_mem_arb #(
     // AXI write response channel
     input wire                          m_axi_bvalid,
     output wire                         m_axi_bready,
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_bid,
+    input wire [AXI_TID_WIDTH:0]        m_axi_bid,
     input wire [1:0]                    m_axi_bresp
 
 );
@@ -194,7 +194,7 @@ module VX_axi_write_mem_arb #(
             m_axi_wvalid,
             m_axi_wdata,
             m_axi_wstrb,
-            m_axi_wlast,
+            m_axi_wlast
         } = req_data_out[i];
         assign req_ready_out[i] = m_axi_awready;
     end
