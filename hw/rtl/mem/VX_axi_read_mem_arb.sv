@@ -6,11 +6,11 @@ module VX_axi_read_mem_arb #(
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
     parameter RSP_OUT_BUF    = 0,
-    parameter `STRING ARBITER = "R"
+    parameter `STRING ARBITER = "R",
 
-    parameter AXI_DATA_WIDTH = `VX_MEM_DATA_WIDTH,
-    parameter AXI_ADDR_WIDTH = `MEM_ADDR_WIDTH + (`VX_MEM_DATA_WIDTH/8),
-    parameter AXI_TID_WIDTH  = `VX_MEM_TAG_WIDTH,
+    parameter AXI_DATA_WIDTH = 0,
+    parameter AXI_ADDR_WIDTH = 0,
+    parameter AXI_TID_WIDTH  = 0
 ) (
     input wire              clk,
     input wire              reset,

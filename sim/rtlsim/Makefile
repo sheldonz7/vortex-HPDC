@@ -11,6 +11,10 @@ CXXFLAGS += -I$(THIRD_PARTY_DIR)/softfloat/source/include
 CXXFLAGS += -I$(THIRD_PARTY_DIR)/ramulator/ext/spdlog/include
 CXXFLAGS += -I$(THIRD_PARTY_DIR)/ramulator/ext/yaml-cpp/include
 CXXFLAGS += -I$(THIRD_PARTY_DIR)/ramulator/src
+
+
+
+
 CXXFLAGS += -DXLEN_$(XLEN)
 
 LDFLAGS += $(THIRD_PARTY_DIR)/softfloat/build/Linux-x86_64-GCC/softfloat.a
@@ -26,14 +30,19 @@ DBG_TRACE_FLAGS += -DDBG_TRACE_GBAR
 
 DBG_FLAGS += -DDEBUG_LEVEL=$(DEBUG) -DVCD_OUTPUT $(DBG_TRACE_FLAGS)
 
-RTL_PKGS = $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv
+RTL_PKGS = $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv
+
+export HPDCACHE_DIR
+
+HPDC_FILE = -f $(HPDCACHE_DIR)/rtl/hpdcache.Flist
+HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/src/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/common/macros/behav -I${HPDCACHE_DIR}/rtl/src/hwpf_stride
 
 FPU_INCLUDE = -I$(RTL_DIR)/fpu
 ifneq (,$(findstring FPU_FPNEW,$(CONFIGS)))
 	RTL_PKGS += $(THIRD_PARTY_DIR)/cvfpu/src/fpnew_pkg.sv $(THIRD_PARTY_DIR)/cvfpu/src/common_cells/src/cf_math_pkg $(THIRD_PARTY_DIR)/cvfpu/src/fpu_div_sqrt_mvp/hdl/defs_div_sqrt_mvp.sv
 	FPU_INCLUDE += -I$(THIRD_PARTY_DIR)/cvfpu/src/common_cells/include -I$(THIRD_PARTY_DIR)/cvfpu/src/common_cells/src -I$(THIRD_PARTY_DIR)/cvfpu/src/fpu_div_sqrt_mvp/hdl -I$(THIRD_PARTY_DIR)/cvfpu/src
 endif
-RTL_INCLUDE = -I$(RTL_DIR) -I$(DPI_DIR) -I$(RTL_DIR)/libs -I$(RTL_DIR)/interfaces -I$(RTL_DIR)/core -I$(RTL_DIR)/mem -I$(RTL_DIR)/cache $(FPU_INCLUDE)
+RTL_INCLUDE = -I$(RTL_DIR) -I$(DPI_DIR) -I$(RTL_DIR)/libs -I$(RTL_DIR)/interfaces -I$(RTL_DIR)/core -I$(RTL_DIR)/mem -I$(RTL_DIR)/cache $(HPDC_INCLUDE) $(FPU_INCLUDE)
 
 SRCS = $(COMMON_DIR)/util.cpp $(COMMON_DIR)/mem.cpp $(COMMON_DIR)/rvfloats.cpp $(COMMON_DIR)/dram_sim.cpp
 SRCS += $(DPI_DIR)/util_dpi.cpp $(DPI_DIR)/float_dpi.cpp
@@ -42,6 +51,7 @@ SRCS += $(SRC_DIR)/processor.cpp
 VL_FLAGS = --exe
 VL_FLAGS += --language 1800-2009 --assert -Wall -Wpedantic
 VL_FLAGS += -Wno-DECLFILENAME -Wno-REDEFMACRO
+VL_FLAGS += -Wno-pinconnectempty
 VL_FLAGS += --x-initial unique --x-assign unique
 VL_FLAGS += verilator.vlt
 VL_FLAGS += -DSIMULATION -DSV_DPI
@@ -50,6 +60,7 @@ VL_FLAGS += $(CONFIGS)
 VL_FLAGS += $(RTL_INCLUDE)
 VL_FLAGS += $(RTL_PKGS)
 VL_FLAGS += --cc Vortex --top-module Vortex
+# VL_FLAGS += $(HPDC_FILE)
 
 CXXFLAGS += $(CONFIGS)
 

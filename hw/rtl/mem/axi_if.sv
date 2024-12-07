@@ -52,72 +52,51 @@ interface axi_if #(
 
 
     // AXI write request address channel
-    logic axi_awvalid;
-    logic axi_awready;
-    aw_req_data_t axi_awdata;
+    logic axi_awvalid[AXI_NUM_BANKS];
+    logic axi_awready[AXI_NUM_BANKS];
+    aw_req_data_t axi_awdata[AXI_NUM_BANKS];
 
     // AXI write request data channel
-    logic axi_wvalid;
-    logic axi_wready;
-    w_req_data_t axi_wdata;
+    logic axi_wvalid[AXI_NUM_BANKS];
+    logic axi_wready[AXI_NUM_BANKS];
+    w_req_data_t axi_wdata[AXI_NUM_BANKS];
 
 
     // AXI write response channel
-    logic axi_bvalid;
-    logic axi_bready;
-    w_resp_data_t axi_bdata;
+    logic axi_bvalid[AXI_NUM_BANKS];
+    logic axi_bready[AXI_NUM_BANKS];
+    w_resp_data_t axi_bdata[AXI_NUM_BANKS];
 
     // AXI read request channel
-    logic axi_arvalid;
-    logic axi_arready;
-    ar_req_data_t axi_ardata;
+    logic axi_arvalid[AXI_NUM_BANKS];
+    logic axi_arready[AXI_NUM_BANKS];
+    ar_req_data_t axi_ardata[AXI_NUM_BANKS];
 
     // AXI read response channel
-    logic axi_rvalid;
-    logic axi_rready;
-    r_resp_data_t axi_rdata;
+    logic axi_rvalid[AXI_NUM_BANKS];
+    logic axi_rready[AXI_NUM_BANKS];
+    r_resp_data_t axi_rdata[AXI_NUM_BANKS];
 
 
-    modport master (
-        output axi_awvalid,
-        output axi_awdata,
-        input  axi_awready,
+    
+    output axi_awvalid,
+    output axi_awdata,
+    input  axi_awready,
 
-        output axi_wvalid,
-        output axi_wdata,
-        input  axi_wready,
+    output axi_wvalid,
+    output axi_wdata,
+    input  axi_wready,
 
-        input  axi_bvalid,
-        output axi_bdata,
+    input  axi_bvalid,
+    output axi_bdata,
 
-        output axi_arvalid,
-        output axi_ardata,
-        input  axi_arready,
+    output axi_arvalid,
+    output axi_ardata,
+    input  axi_arready,
 
-        input  axi_rvalid,
-        output axi_rdata
-    );
-
-    modport slave (
-        input  axi_awvalid,
-        input  axi_awdata,
-        output axi_awready,
-
-        input  axi_wvalid,
-        input  axi_wdata,
-        output axi_wready,
-
-        output axi_bvalid,
-        input  axi_bdata,
-
-        input  axi_arvalid,
-        input  axi_ardata,
-        output axi_arready,
-
-        output axi_rvalid,
-        input  axi_rdata
-    );
-
+    input  axi_rvalid,
+    output axi_rdata
+    
 
 // // Memory AXI bus
 //     // AXI write request address channel

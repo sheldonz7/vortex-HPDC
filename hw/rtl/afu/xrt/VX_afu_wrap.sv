@@ -260,7 +260,7 @@ module VX_afu_wrap #(
 
 	`SCOPE_IO_SWITCH (2);
 
-	Vortex_axi #(
+	Vortex_axi_wrapper_mini #(
 		.AXI_DATA_WIDTH (C_M_AXI_MEM_DATA_WIDTH),
 		.AXI_ADDR_WIDTH (M_AXI_MEM_ADDR_WIDTH),
 		.AXI_TID_WIDTH  (C_M_AXI_MEM_ID_WIDTH),

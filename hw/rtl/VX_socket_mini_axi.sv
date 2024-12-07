@@ -148,105 +148,105 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
 
     // Memory AXI bus
     // AXI write request address channel
-     wire                         icache_m_axi_awvalid [AXI_NUM_BANKS],
-    wire                          icache_m_axi_awready [AXI_NUM_BANKS],
-     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_awaddr [AXI_NUM_BANKS],
-     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_awid [AXI_NUM_BANKS],
-     wire [7:0]                   icache_m_axi_awlen [AXI_NUM_BANKS],
-     wire [2:0]                   icache_m_axi_awsize [AXI_NUM_BANKS],
-     wire [1:0]                   icache_m_axi_awburst [AXI_NUM_BANKS],
-     wire [1:0]                   icache_m_axi_awlock [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_awcache [AXI_NUM_BANKS],
-     wire [2:0]                   icache_m_axi_awprot [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_awqos [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_awregion [AXI_NUM_BANKS],
+     wire                         icache_m_axi_awvalid [AXI_NUM_BANKS];
+    wire                          icache_m_axi_awready [AXI_NUM_BANKS];
+     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_awaddr [AXI_NUM_BANKS];
+     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_awid [AXI_NUM_BANKS];
+     wire [7:0]                   icache_m_axi_awlen [AXI_NUM_BANKS];
+     wire [2:0]                   icache_m_axi_awsize [AXI_NUM_BANKS];
+     wire [1:0]                   icache_m_axi_awburst [AXI_NUM_BANKS];
+     wire [1:0]                   icache_m_axi_awlock [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_awcache [AXI_NUM_BANKS];
+     wire [2:0]                   icache_m_axi_awprot [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_awqos [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_awregion [AXI_NUM_BANKS];
 
     // AXI write request data channel
-     wire                         icache_m_axi_wvalid [AXI_NUM_BANKS],
-    wire                          icache_m_axi_wready [AXI_NUM_BANKS],
-     wire [AXI_DATA_WIDTH-1:0]    icache_m_axi_wdata [AXI_NUM_BANKS],
-     wire [AXI_DATA_WIDTH/8-1:0]  icache_m_axi_wstrb [AXI_NUM_BANKS],
-     wire                         icache_m_axi_wlast [AXI_NUM_BANKS],
+     wire                         icache_m_axi_wvalid [AXI_NUM_BANKS];
+    wire                          icache_m_axi_wready [AXI_NUM_BANKS];
+     wire [AXI_DATA_WIDTH-1:0]    icache_m_axi_wdata [AXI_NUM_BANKS];
+     wire [AXI_DATA_WIDTH/8-1:0]  icache_m_axi_wstrb [AXI_NUM_BANKS];
+     wire                         icache_m_axi_wlast [AXI_NUM_BANKS];
 
     // AXI write response channel
-    wire                          icache_m_axi_bvalid [AXI_NUM_BANKS],
-     wire                         icache_m_axi_bready [AXI_NUM_BANKS],
-    wire [AXI_TID_WIDTH-1:0]      icache_m_axi_bid [AXI_NUM_BANKS],
-    wire [1:0]                    icache_m_axi_bresp [AXI_NUM_BANKS],
+    wire                          icache_m_axi_bvalid [AXI_NUM_BANKS];
+     wire                         icache_m_axi_bready [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      icache_m_axi_bid [AXI_NUM_BANKS];
+    wire [1:0]                    icache_m_axi_bresp [AXI_NUM_BANKS];
 
     // AXI read request channel
-     wire                         icache_m_axi_arvalid [AXI_NUM_BANKS],
-    wire                          icache_m_axi_arready [AXI_NUM_BANKS],
-     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_araddr [AXI_NUM_BANKS],
-     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_arid [AXI_NUM_BANKS],
-     wire [7:0]                   icache_m_axi_arlen [AXI_NUM_BANKS],
-     wire [2:0]                   icache_m_axi_arsize [AXI_NUM_BANKS],
-     wire [1:0]                   icache_m_axi_arburst [AXI_NUM_BANKS],
-     wire [1:0]                   icache_m_axi_arlock [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_arcache [AXI_NUM_BANKS],
-     wire [2:0]                   icache_m_axi_arprot [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_arqos [AXI_NUM_BANKS],
-     wire [3:0]                   icache_m_axi_arregion [AXI_NUM_BANKS],
+     wire                         icache_m_axi_arvalid [AXI_NUM_BANKS];
+    wire                          icache_m_axi_arready [AXI_NUM_BANKS];
+     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_araddr [AXI_NUM_BANKS];
+     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_arid [AXI_NUM_BANKS];
+     wire [7:0]                   icache_m_axi_arlen [AXI_NUM_BANKS];
+     wire [2:0]                   icache_m_axi_arsize [AXI_NUM_BANKS];
+     wire [1:0]                   icache_m_axi_arburst [AXI_NUM_BANKS];
+     wire [1:0]                   icache_m_axi_arlock [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_arcache [AXI_NUM_BANKS];
+     wire [2:0]                   icache_m_axi_arprot [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_arqos [AXI_NUM_BANKS];
+     wire [3:0]                   icache_m_axi_arregion [AXI_NUM_BANKS];
 
     // AXI read response channel
-    wire                          icache_m_axi_rvalid [AXI_NUM_BANKS],
-     wire                         icache_m_axi_rready [AXI_NUM_BANKS],
-    wire [AXI_DATA_WIDTH-1:0]     icache_m_axi_rdata [AXI_NUM_BANKS],
-    wire                          icache_m_axi_rlast [AXI_NUM_BANKS],
-    wire [AXI_TID_WIDTH-1:0]      icache_m_axi_rid [AXI_NUM_BANKS],
-    wire [1:0]                    icache_m_axi_rresp [AXI_NUM_BANKS],
+    wire                          icache_m_axi_rvalid [AXI_NUM_BANKS];
+     wire                         icache_m_axi_rready [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH-1:0]     icache_m_axi_rdata [AXI_NUM_BANKS];
+    wire                          icache_m_axi_rlast [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      icache_m_axi_rid [AXI_NUM_BANKS];
+    wire [1:0]                    icache_m_axi_rresp [AXI_NUM_BANKS];
 
     // dcache
 
      // Memory AXI bus
     // AXI write request address channel
-     wire                         dcache_m_axi_awvalid [AXI_NUM_BANKS],
-    wire                          dcache_m_axi_awready [AXI_NUM_BANKS],
-     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_awaddr [AXI_NUM_BANKS],
-     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_awid [AXI_NUM_BANKS],
-     wire [7:0]                   dcache_m_axi_awlen [AXI_NUM_BANKS],
-     wire [2:0]                   dcache_m_axi_awsize [AXI_NUM_BANKS],
-     wire [1:0]                   dcache_m_axi_awburst [AXI_NUM_BANKS],
-     wire [1:0]                   dcache_m_axi_awlock [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_awcache [AXI_NUM_BANKS],
-     wire [2:0]                   dcache_m_axi_awprot [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_awqos [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_awregion [AXI_NUM_BANKS],
+     wire                         dcache_m_axi_awvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_awready [AXI_NUM_BANKS];
+     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_awaddr [AXI_NUM_BANKS];
+     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_awid [AXI_NUM_BANKS];
+     wire [7:0]                   dcache_m_axi_awlen [AXI_NUM_BANKS];
+     wire [2:0]                   dcache_m_axi_awsize [AXI_NUM_BANKS];
+     wire [1:0]                   dcache_m_axi_awburst [AXI_NUM_BANKS];
+     wire [1:0]                   dcache_m_axi_awlock [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_awcache [AXI_NUM_BANKS];
+     wire [2:0]                   dcache_m_axi_awprot [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_awqos [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_awregion [AXI_NUM_BANKS];
 
     // AXI write request data channel
-     wire                         dcache_m_axi_wvalid [AXI_NUM_BANKS],
-    wire                          dcache_m_axi_wready [AXI_NUM_BANKS],
-     wire [AXI_DATA_WIDTH-1:0]    dcache_m_axi_wdata [AXI_NUM_BANKS],
-     wire [AXI_DATA_WIDTH/8-1:0]  dcache_m_axi_wstrb [AXI_NUM_BANKS],
-     wire                         dcache_m_axi_wlast [AXI_NUM_BANKS],
+     wire                         dcache_m_axi_wvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_wready [AXI_NUM_BANKS];
+     wire [AXI_DATA_WIDTH-1:0]    dcache_m_axi_wdata [AXI_NUM_BANKS];
+     wire [AXI_DATA_WIDTH/8-1:0]  dcache_m_axi_wstrb [AXI_NUM_BANKS];
+     wire                         dcache_m_axi_wlast [AXI_NUM_BANKS];
 
     // AXI write response channel
-    wire                          dcache_m_axi_bvalid [AXI_NUM_BANKS],
-     wire                         dcache_m_axi_bready [AXI_NUM_BANKS],
-    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_bid [AXI_NUM_BANKS],
-    wire [1:0]                    dcache_m_axi_bresp [AXI_NUM_BANKS],
+    wire                          dcache_m_axi_bvalid [AXI_NUM_BANKS];
+     wire                         dcache_m_axi_bready [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_bid [AXI_NUM_BANKS];
+    wire [1:0]                    dcache_m_axi_bresp [AXI_NUM_BANKS];
 
     // AXI read request channel
-     wire                         dcache_m_axi_arvalid [AXI_NUM_BANKS],
-    wire                          dcache_m_axi_arready [AXI_NUM_BANKS],
-     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_araddr [AXI_NUM_BANKS],
-     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_arid [AXI_NUM_BANKS],
-     wire [7:0]                   dcache_m_axi_arlen [AXI_NUM_BANKS],
-     wire [2:0]                   dcache_m_axi_arsize [AXI_NUM_BANKS],
-     wire [1:0]                   dcache_m_axi_arburst [AXI_NUM_BANKS],
-     wire [1:0]                   dcache_m_axi_arlock [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_arcache [AXI_NUM_BANKS],
-     wire [2:0]                   dcache_m_axi_arprot [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_arqos [AXI_NUM_BANKS],
-     wire [3:0]                   dcache_m_axi_arregion [AXI_NUM_BANKS],
+     wire                         dcache_m_axi_arvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_arready [AXI_NUM_BANKS];
+     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_araddr [AXI_NUM_BANKS];
+     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_arid [AXI_NUM_BANKS];
+     wire [7:0]                   dcache_m_axi_arlen [AXI_NUM_BANKS];
+     wire [2:0]                   dcache_m_axi_arsize [AXI_NUM_BANKS];
+     wire [1:0]                   dcache_m_axi_arburst [AXI_NUM_BANKS];
+     wire [1:0]                   dcache_m_axi_arlock [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_arcache [AXI_NUM_BANKS];
+     wire [2:0]                   dcache_m_axi_arprot [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_arqos [AXI_NUM_BANKS];
+     wire [3:0]                   dcache_m_axi_arregion [AXI_NUM_BANKS];
 
     // AXI read response channel
-    wire                          dcache_m_axi_rvalid [AXI_NUM_BANKS],
-     wire                         dcache_m_axi_rready [AXI_NUM_BANKS],
-    wire [AXI_DATA_WIDTH-1:0]     dcache_m_axi_rdata [AXI_NUM_BANKS],
-    wire                          dcache_m_axi_rlast [AXI_NUM_BANKS],
-    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_rid [AXI_NUM_BANKS],
-    wire [1:0]                    dcache_m_axi_rresp [AXI_NUM_BANKS],
+    wire                          dcache_m_axi_rvalid [AXI_NUM_BANKS];
+     wire                         dcache_m_axi_rready [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH-1:0]     dcache_m_axi_rdata [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_rlast [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_rid [AXI_NUM_BANKS];
+    wire [1:0]                    dcache_m_axi_rresp [AXI_NUM_BANKS];
 
 
     VX_mem_bus_if #(
@@ -677,19 +677,173 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
 
  
  
- 
-    VX_axi_read_mem_arb #(
-        .NUM_REQS (`SOCKET_SIZE),
-        .OUT_BUF  ((`SOCKET_SIZE > 1) ? 2 : 0)
-    ) read_mem_arb (
-        .clk        (clk),
-        .reset      (reset),
+    for (genvar bank_id = 0; bank_id < AXI_NUM_BANKS; ++bank_id) begin: axi_arb
+        VX_axi_read_mem_arb #(
+            .TAG_SEL_IDX(0),
+            .ARBITER    ("P"), // prioritize the icache
+            .REQ_OUT_BUF(3),
+            .RSP_OUT_BUF(3),
+            .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+            .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+            .AXI_TID_WIDTH(AXI_TID_WIDTH)
+        ) read_mem_arb (
+            .clk        (clk),
+            .reset      (reset),
 
-        .m_axi_arvalid_0    (m_axi_arvalid[0]),
-    );
- 
- 
- 
+            .m_axi_arvalid_0  (icache_m_axi_arvalid[bank_id]),
+            .m_axi_arready_0  (icache_m_axi_arready[bank_id]),
+            .m_axi_araddr_0   (icache_m_axi_araddr[bank_id]),
+            .m_axi_arid_0     (icache_m_axi_arid[bank_id]),
+            .m_axi_arlen_0    (icache_m_axi_arlen[bank_id]),
+            .m_axi_arsize_0   (icache_m_axi_arsize[bank_id]),
+            .m_axi_arburst_0  (icache_m_axi_arburst[bank_id]),
+            .m_axi_arlock_0   (icache_m_axi_arlock[bank_id]),
+            .m_axi_arcache_0  (icache_m_axi_arcache[bank_id]),
+            .m_axi_arprot_0   (icache_m_axi_arprot[bank_id]),
+            .m_axi_arqos_0    (icache_m_axi_arqos[bank_id]),
+            .m_axi_arregion_0 (icache_m_axi_arregion[bank_id]),
+
+            .m_axi_rvalid_0   (icache_m_axi_rvalid[bank_id]),
+            .m_axi_rready_0   (icache_m_axi_rready[bank_id]),
+            .m_axi_rdata_0    (icache_m_axi_rdata[bank_id]),
+            .m_axi_rlast_0    (icache_m_axi_rlast[bank_id]),
+            .m_axi_rid_0      (icache_m_axi_rid[bank_id]),
+            .m_axi_rresp_0    (icache_m_axi_rresp[bank_id]),
+
+            .m_axi_arvalid_1  (dcache_m_axi_arvalid[bank_id]),
+            .m_axi_arready_1  (dcache_m_axi_arready[bank_id]),
+            .m_axi_araddr_1   (dcache_m_axi_araddr[bank_id]),
+            .m_axi_arid_1     (dcache_m_axi_arid[bank_id]),
+            .m_axi_arlen_1    (dcache_m_axi_arlen[bank_id]),
+            .m_axi_arsize_1   (dcache_m_axi_arsize[bank_id]),
+            .m_axi_arburst_1  (dcache_m_axi_arburst[bank_id]),
+            .m_axi_arlock_1   (dcache_m_axi_arlock[bank_id]),
+            .m_axi_arcache_1  (dcache_m_axi_arcache[bank_id]),
+            .m_axi_arprot_1   (dcache_m_axi_arprot[bank_id]),
+            .m_axi_arqos_1    (dcache_m_axi_arqos[bank_id]),
+            .m_axi_arregion_1 (dcache_m_axi_arregion[bank_id]),
+
+            .m_axi_rvalid_1   (dcache_m_axi_rvalid[bank_id]),
+            .m_axi_rready_1   (dcache_m_axi_rready[bank_id]),
+            .m_axi_rdata_1    (dcache_m_axi_rdata[bank_id]),
+            .m_axi_rlast_1    (dcache_m_axi_rlast[bank_id]),
+            .m_axi_rid_1      (dcache_m_axi_rid[bank_id]),
+            .m_axi_rresp_1    (dcache_m_axi_rresp[bank_id]),
+
+            .m_axi_arvalid    (m_axi_araddr[bank_id]),
+            .m_axi_arready    (m_axi_arready[bank_id]),    
+            .m_axi_araddr     (m_axi_araddr[bank_id]),
+            .m_axi_arid       (m_axi_arid[bank_id]),
+            .m_axi_arlen      (m_axi_arlen[bank_id]),
+            .m_axi_arsize     (m_axi_arsize[bank_id]),
+            .m_axi_arburst    (m_axi_arburst[bank_id]),
+            .m_axi_arlock     (m_axi_arlock[bank_id]),
+            .m_axi_arcache    (m_axi_arcache[bank_id]),
+            .m_axi_arprot     (m_axi_arprot[bank_id]),
+            .m_axi_arqos      (m_axi_arqos[bank_id]),
+            .m_axi_arregion   (m_axi_arregion[bank_id]),
+
+            .m_axi_rvalid     (m_axi_rvalid[bank_id]),
+            .m_axi_rready     (m_axi_rready[bank_id]),
+            .m_axi_rdata      (m_axi_rdata[bank_id]),
+            .m_axi_rlast      (m_axi_rlast[bank_id]),
+            .m_axi_rid        (m_axi_rid[bank_id]),
+            .m_axi_rresp      (m_axi_rresp[bank_id])
+        );
+    
+        VX_axi_write_mem_arb #(
+            .TAG_SEL_IDX(0),
+            .ARBITER    ("P"), // prioritize the icache
+            .REQ_OUT_BUF(3),
+            .RSP_OUT_BUF(3),
+            .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
+            .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+            .AXI_TID_WIDTH(AXI_TID_WIDTH)
+        ) write_mem_arb (
+            .clk        (clk),
+            .reset      (reset),
+
+            // write request address channel
+            .m_axi_awvalid_0  (icache_m_axi_awvalid[bank_id]),
+            .m_axi_awready_0  (icache_m_axi_awready[bank_id]),
+            .m_axi_awaddr_0   (icache_m_axi_awaddr[bank_id]),
+            .m_axi_awid_0     (icache_m_axi_awid[bank_id]),
+            .m_axi_awlen_0    (icache_m_axi_awlen[bank_id]),
+            .m_axi_awsize_0   (icache_m_axi_awsize[bank_id]),
+            .m_axi_awburst_0  (icache_m_axi_awburst[bank_id]),
+            .m_axi_awlock_0   (icache_m_axi_awlock[bank_id]),
+            .m_axi_awcache_0  (icache_m_axi_awcache[bank_id]),
+            .m_axi_awprot_0   (icache_m_axi_awprot[bank_id]),
+            .m_axi_awqos_0    (icache_m_axi_awqos[bank_id]),
+            .m_axi_awregion_0 (icache_m_axi_awregion[bank_id]),
+            // write request data channel
+            .m_axi_wvalid_0   (icache_m_axi_wvalid[bank_id]),
+            .m_axi_wready_0   (icache_m_axi_wready[bank_id]),
+            .m_axi_wdata_0    (icache_m_axi_wdata[bank_id]),
+            .m_axi_wstrb_0    (icache_m_axi_wstrb[bank_id]),
+            .m_axi_wlast_0    (icache_m_axi_wlast[bank_id]),
+            // write response channel
+            .m_axi_bvalid_0   (icache_m_axi_bvalid[bank_id]),
+            .m_axi_bready_0   (icache_m_axi_bready[bank_id]),
+            .m_axi_bid_0      (icache_m_axi_bid[bank_id]),
+            .m_axi_bresp_0    (icache_m_axi_bresp[bank_id]),
+
+            // write request address channel
+            .m_axi_awvalid_1  (dcache_m_axi_awvalid[bank_id]),
+            .m_axi_awready_1  (dcache_m_axi_awready[bank_id]),
+            .m_axi_awaddr_1   (dcache_m_axi_awaddr[bank_id]),
+            .m_axi_awid_1     (dcache_m_axi_awid[bank_id]),
+            .m_axi_awlen_1    (dcache_m_axi_awlen[bank_id]),
+            .m_axi_awsize_1   (dcache_m_axi_awsize[bank_id]),
+            .m_axi_awburst_1  (dcache_m_axi_awburst[bank_id]),
+            .m_axi_awlock_1   (dcache_m_axi_awlock[bank_id]),
+            .m_axi_awcache_1  (dcache_m_axi_awcache[bank_id]),
+            .m_axi_awprot_1   (dcache_m_axi_awprot[bank_id]),
+            .m_axi_awqos_1    (dcache_m_axi_awqos[bank_id]),
+            .m_axi_awregion_1 (dcache_m_axi_awregion[bank_id]),
+
+            // write request data channel
+            .m_axi_wvalid_1   (dcache_m_axi_wvalid[bank_id]),
+            .m_axi_wready_1   (dcache_m_axi_wready[bank_id]),
+            .m_axi_wdata_1    (dcache_m_axi_wdata[bank_id]),
+            .m_axi_wstrb_1    (dcache_m_axi_wstrb[bank_id]),
+            .m_axi_wlast_1    (dcache_m_axi_wlast[bank_id]),
+
+            // write response channel
+            .m_axi_bvalid_1   (dcache_m_axi_bvalid[bank_id]),
+            .m_axi_bready_1   (dcache_m_axi_bready[bank_id]),
+            .m_axi_bid_1      (dcache_m_axi_bid[bank_id]),
+            .m_axi_bresp_1    (dcache_m_axi_bresp[bank_id]),
+
+            // write request address channel
+            .m_axi_awvalid    (m_axi_awaddr[bank_id]),
+            .m_axi_awready    (m_axi_awready[bank_id]),
+            .m_axi_awaddr     (m_axi_awaddr[bank_id]),
+            .m_axi_awid       (m_axi_awid[bank_id]),
+            .m_axi_awlen      (m_axi_awlen[bank_id]),
+            .m_axi_awsize     (m_axi_awsize[bank_id]),
+            .m_axi_awburst    (m_axi_awburst[bank_id]),
+            .m_axi_awlock     (m_axi_awlock[bank_id]),
+            .m_axi_awcache    (m_axi_awcache[bank_id]),
+            .m_axi_awprot     (m_axi_awprot[bank_id]),
+            .m_axi_awqos      (m_axi_awqos[bank_id]),
+            .m_axi_awregion   (m_axi_awregion[bank_id]),
+
+            // write request data channel
+            .m_axi_wvalid     (m_axi_wvalid[bank_id]),
+            .m_axi_wready     (m_axi_wready[bank_id]),
+            .m_axi_wdata      (m_axi_wdata[bank_id]),
+            .m_axi_wstrb      (m_axi_wstrb[bank_id]),
+            .m_axi_wlast      (m_axi_wlast[bank_id]),
+
+            // write response channel
+            .m_axi_bvalid     (m_axi_bvalid[bank_id]),
+            .m_axi_bready     (m_axi_bready[bank_id]),
+            .m_axi_bid        (m_axi_bid[bank_id]),
+            .m_axi_bresp      (m_axi_bresp[bank_id])
+
+        );
+    end
     ///////////////////////////////////////////////////////////////////////////
 
     wire [`SOCKET_SIZE-1:0] per_core_busy;
