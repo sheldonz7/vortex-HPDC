@@ -66,7 +66,7 @@ module VX_axi_read_mem_arb #(
     output wire                         m_axi_arvalid,
     input wire                          m_axi_arready,
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_araddr,
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_arid,
+    output wire [AXI_TID_WIDTH:0]       m_axi_arid,
     output wire [7:0]                   m_axi_arlen,
     output wire [2:0]                   m_axi_arsize,
     output wire [1:0]                   m_axi_arburst,
@@ -81,7 +81,7 @@ module VX_axi_read_mem_arb #(
     output wire                         m_axi_rready,
     input wire [AXI_DATA_WIDTH-1:0]     m_axi_rdata,
     input wire                          m_axi_rlast,
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_rid,
+    input wire [AXI_TID_WIDTH:0]        m_axi_rid,
     input wire [1:0]                    m_axi_rresp
 
 );

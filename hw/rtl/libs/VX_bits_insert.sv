@@ -13,7 +13,6 @@
 
 `include "VX_platform.vh"
 
-`TRACING_OFF
 module VX_bits_insert #(
     parameter N   = 1,
     parameter S   = 1,
@@ -37,4 +36,3 @@ module VX_bits_insert #(
     end
 
 endmodule
-`TRACING_ON
