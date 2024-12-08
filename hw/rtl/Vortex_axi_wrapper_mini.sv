@@ -29,7 +29,7 @@ module Vortex_axi_wrapper_mini import VX_gpu_pkg::*; #(
     output wire                         m_axi_awvalid [AXI_NUM_BANKS],
     input wire                          m_axi_awready [AXI_NUM_BANKS],
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_awaddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_awid [AXI_NUM_BANKS],
+    output wire [AXI_TID_WIDTH:0]       m_axi_awid [AXI_NUM_BANKS],
     output wire [7:0]                   m_axi_awlen [AXI_NUM_BANKS],
     output wire [2:0]                   m_axi_awsize [AXI_NUM_BANKS],
     output wire [1:0]                   m_axi_awburst [AXI_NUM_BANKS],
@@ -49,14 +49,14 @@ module Vortex_axi_wrapper_mini import VX_gpu_pkg::*; #(
     // AXI write response channel
     input wire                          m_axi_bvalid [AXI_NUM_BANKS],
     output wire                         m_axi_bready [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_bid [AXI_NUM_BANKS],
+    input wire [AXI_TID_WIDTH:0]        m_axi_bid [AXI_NUM_BANKS],
     input wire [1:0]                    m_axi_bresp [AXI_NUM_BANKS],
 
     // AXI read request channel
     output wire                         m_axi_arvalid [AXI_NUM_BANKS],
     input wire                          m_axi_arready [AXI_NUM_BANKS],
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_araddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_arid [AXI_NUM_BANKS],
+    output wire [AXI_TID_WIDTH:0]       m_axi_arid [AXI_NUM_BANKS],
     output wire [7:0]                   m_axi_arlen [AXI_NUM_BANKS],
     output wire [2:0]                   m_axi_arsize [AXI_NUM_BANKS],
     output wire [1:0]                   m_axi_arburst [AXI_NUM_BANKS],
@@ -71,7 +71,7 @@ module Vortex_axi_wrapper_mini import VX_gpu_pkg::*; #(
     output wire                         m_axi_rready [AXI_NUM_BANKS],
     input wire [AXI_DATA_WIDTH-1:0]     m_axi_rdata [AXI_NUM_BANKS],
     input wire                          m_axi_rlast [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_rid [AXI_NUM_BANKS],
+    input wire [AXI_TID_WIDTH:0]        m_axi_rid [AXI_NUM_BANKS],
     input wire [1:0]                    m_axi_rresp [AXI_NUM_BANKS],
 
     // DCR write request
@@ -129,14 +129,14 @@ module Vortex_axi_wrapper_mini import VX_gpu_pkg::*; #(
 
 `endif
 
-    localparam DST_LDATAW = `CLOG2(AXI_DATA_WIDTH);
-    localparam SRC_LDATAW = `CLOG2(`VX_MEM_DATA_WIDTH);
-    localparam SUB_LDATAW = DST_LDATAW - SRC_LDATAW;
-    localparam VX_MEM_TAG_A_WIDTH  = `VX_MEM_TAG_WIDTH + `MAX(SUB_LDATAW, 0);
-    localparam VX_MEM_ADDR_A_WIDTH = `VX_MEM_ADDR_WIDTH - SUB_LDATAW;
+    // localparam DST_LDATAW = `CLOG2(AXI_DATA_WIDTH);
+    // localparam SRC_LDATAW = `CLOG2(`VX_MEM_DATA_WIDTH);
+    // localparam SUB_LDATAW = DST_LDATAW - SRC_LDATAW;
+    // localparam VX_MEM_TAG_A_WIDTH  = `VX_MEM_TAG_WIDTH + `MAX(SUB_LDATAW, 0);
+    // localparam VX_MEM_ADDR_A_WIDTH = `VX_MEM_ADDR_WIDTH - SUB_LDATAW;
 
 
-    localparam CLUSTER_ID = 0;
+    // localparam CLUSTER_ID = 0;
 
     // DCR: Vortex -> CLuster -> socket
     VX_dcr_bus_if dcr_bus_if();
@@ -144,7 +144,7 @@ module Vortex_axi_wrapper_mini import VX_gpu_pkg::*; #(
     assign dcr_bus_if.write_addr  = dcr_wr_addr;
     assign dcr_bus_if.write_data  = dcr_wr_data;
 
-    `RESET_RELAY (cluster_reset, reset);
+    // `RESET_RELAY (cluster_reset, reset);
     VX_dcr_bus_if cluster_dcr_bus_if();
         `BUFFER_DCR_BUS_IF (cluster_dcr_bus_if, dcr_bus_if, 1'b1, (`NUM_CLUSTERS > 1))
 

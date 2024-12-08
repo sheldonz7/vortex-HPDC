@@ -20,7 +20,7 @@ module VX_axi_adapter #(
     parameter ADDR_WIDTH_OUT = 32,
     parameter TAG_WIDTH_IN   = 8,
     parameter TAG_WIDTH_OUT  = 8,
-    parameter NUM_BANKS      = 1,
+    parameter NUM_BANKS      = 2,
     parameter BANK_INTERLEAVE= 0,
     parameter TAG_BUFFER_SIZE= 32,
     parameter RSP_OUT_BUF    = 0

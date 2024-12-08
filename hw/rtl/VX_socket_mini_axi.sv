@@ -39,7 +39,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     output wire                         m_axi_awvalid [AXI_NUM_BANKS],
     input wire                          m_axi_awready [AXI_NUM_BANKS],
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_awaddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_awid [AXI_NUM_BANKS],
+    output wire [AXI_TID_WIDTH:0]       m_axi_awid [AXI_NUM_BANKS],
     output wire [7:0]                   m_axi_awlen [AXI_NUM_BANKS],
     output wire [2:0]                   m_axi_awsize [AXI_NUM_BANKS],
     output wire [1:0]                   m_axi_awburst [AXI_NUM_BANKS],
@@ -59,14 +59,14 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     // AXI write response channel
     input wire                          m_axi_bvalid [AXI_NUM_BANKS],
     output wire                         m_axi_bready [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_bid [AXI_NUM_BANKS],
+    input wire [AXI_TID_WIDTH:0]        m_axi_bid [AXI_NUM_BANKS],
     input wire [1:0]                    m_axi_bresp [AXI_NUM_BANKS],
 
     // AXI read request channel
     output wire                         m_axi_arvalid [AXI_NUM_BANKS],
     input wire                          m_axi_arready [AXI_NUM_BANKS],
     output wire [AXI_ADDR_WIDTH-1:0]    m_axi_araddr [AXI_NUM_BANKS],
-    output wire [AXI_TID_WIDTH-1:0]     m_axi_arid [AXI_NUM_BANKS],
+    output wire [AXI_TID_WIDTH:0]       m_axi_arid [AXI_NUM_BANKS],
     output wire [7:0]                   m_axi_arlen [AXI_NUM_BANKS],
     output wire [2:0]                   m_axi_arsize [AXI_NUM_BANKS],
     output wire [1:0]                   m_axi_arburst [AXI_NUM_BANKS],
@@ -81,7 +81,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     output wire                         m_axi_rready [AXI_NUM_BANKS],
     input wire [AXI_DATA_WIDTH-1:0]     m_axi_rdata [AXI_NUM_BANKS],
     input wire                          m_axi_rlast [AXI_NUM_BANKS],
-    input wire [AXI_TID_WIDTH-1:0]      m_axi_rid [AXI_NUM_BANKS],
+    input wire [AXI_TID_WIDTH:0]        m_axi_rid [AXI_NUM_BANKS],
     input wire [1:0]                    m_axi_rresp [AXI_NUM_BANKS],
 
 `ifdef GBAR_ENABLE
@@ -92,8 +92,8 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     output wire             busy
 );
 
-    localparam ICACHE_AXI_NUM_BANKS = 1;
-    localparam DCACHE_AXI_NUM_BANKS = 1;
+    // localparam ICACHE_AXI_NUM_BANKS = 1;
+    // localparam DCACHE_AXI_NUM_BANKS = 1;
 
 `ifdef SCOPE
     localparam scope_core = 0;
@@ -143,6 +143,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     wire                            mem_rsp_valid;
     wire [`VX_MEM_DATA_WIDTH-1:0]   mem_rsp_data;
     wire [`VX_MEM_TAG_WIDTH-1:0]    mem_rsp_tag;
+    `UNUSED_VAR(mem_rsp_tag[51:48]);
     wire                            mem_rsp_ready;
 
 
@@ -299,13 +300,13 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     assign mem_req_byteen= icache_mem_bus_if.req_data.byteen;
     assign mem_req_addr  = icache_mem_bus_if.req_data.addr;
     assign mem_req_data  = icache_mem_bus_if.req_data.data;
-    assign mem_req_tag   = icache_mem_bus_if.req_data.tag;
+    assign mem_req_tag   = {4'b0, icache_mem_bus_if.req_data.tag};
     assign icache_mem_bus_if.req_ready = mem_req_ready;
     `UNUSED_VAR (icache_mem_bus_if.req_data.flags)
 
     assign icache_mem_bus_if.rsp_valid = mem_rsp_valid;
     assign icache_mem_bus_if.rsp_data.data  = mem_rsp_data;
-    assign icache_mem_bus_if.rsp_data.tag   = mem_rsp_tag;
+    assign icache_mem_bus_if.rsp_data.tag   = mem_rsp_tag[47:0];
     assign mem_rsp_ready = icache_mem_bus_if.rsp_ready;
 
     
@@ -371,9 +372,9 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .ADDR_WIDTH_OUT (AXI_ADDR_WIDTH),
         .TAG_WIDTH_IN   (VX_MEM_TAG_A_WIDTH),
         .TAG_WIDTH_OUT  (AXI_TID_WIDTH),
-        .NUM_BANKS      (ICACHE_AXI_NUM_BANKS),
+        .NUM_BANKS      (AXI_NUM_BANKS),
         .BANK_INTERLEAVE(0),
-        .RSP_OUT_BUF    ((ICACHE_AXI_NUM_BANKS > 1) ? 2 : 0)
+        .RSP_OUT_BUF    ((AXI_NUM_BANKS > 1) ? 2 : 0)
     ) mem_adapter_icache (
         .clk            (clk),
         .reset          (reset),
@@ -463,6 +464,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     wire                            dcache_mem_rsp_valid;
     wire [`VX_MEM_DATA_WIDTH-1:0]   dcache_mem_rsp_data;
     wire [`VX_MEM_TAG_WIDTH-1:0]    dcache_mem_rsp_tag;
+    `UNUSED_VAR(dcache_mem_rsp_tag[51]);
     wire                            dcache_mem_rsp_ready;
 
 
@@ -508,13 +510,13 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     assign dcache_mem_req_byteen= dcache_mem_bus_if.req_data.byteen;
     assign dcache_mem_req_addr  = dcache_mem_bus_if.req_data.addr;
     assign dcache_mem_req_data  = dcache_mem_bus_if.req_data.data;
-    assign dcache_mem_req_tag   = dcache_mem_bus_if.req_data.tag;
+    assign dcache_mem_req_tag   = {1'b0, dcache_mem_bus_if.req_data.tag};
     assign dcache_mem_bus_if.req_ready = dcache_mem_req_ready;
     `UNUSED_VAR (dcache_mem_bus_if.req_data.flags)
 
     assign dcache_mem_bus_if.rsp_valid = dcache_mem_rsp_valid;
     assign dcache_mem_bus_if.rsp_data.data  = dcache_mem_rsp_data;
-    assign dcache_mem_bus_if.rsp_data.tag   = dcache_mem_rsp_tag;
+    assign dcache_mem_bus_if.rsp_data.tag   = dcache_mem_rsp_tag[50:0];
     assign dcache_mem_rsp_ready = dcache_mem_bus_if.rsp_ready;
 
 
@@ -730,7 +732,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
             .m_axi_rid_1      (dcache_m_axi_rid[bank_id]),
             .m_axi_rresp_1    (dcache_m_axi_rresp[bank_id]),
 
-            .m_axi_arvalid    (m_axi_araddr[bank_id]),
+            .m_axi_arvalid    (m_axi_arvalid[bank_id]),
             .m_axi_arready    (m_axi_arready[bank_id]),    
             .m_axi_araddr     (m_axi_araddr[bank_id]),
             .m_axi_arid       (m_axi_arid[bank_id]),
@@ -816,7 +818,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
             .m_axi_bresp_1    (dcache_m_axi_bresp[bank_id]),
 
             // write request address channel
-            .m_axi_awvalid    (m_axi_awaddr[bank_id]),
+            .m_axi_awvalid    (m_axi_awvalid[bank_id]),
             .m_axi_awready    (m_axi_awready[bank_id]),
             .m_axi_awaddr     (m_axi_awaddr[bank_id]),
             .m_axi_awid       (m_axi_awid[bank_id]),
