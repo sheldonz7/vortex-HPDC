@@ -1,7 +1,7 @@
 `include "VX_define.vh"
 
 module VX_axi_read_mem_arb #(
-    parameter NUM_INPUTS     = 1,
+    parameter NUM_INPUTS     = 2,
     parameter NUM_OUTPUTS    = 1,
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
@@ -85,10 +85,9 @@ module VX_axi_read_mem_arb #(
     input wire [1:0]                    m_axi_rresp
 
 );
-    localparam DATA_WIDTH   = AXI_DATA_WIDTH;
     localparam LOG_NUM_REQS = `ARB_SEL_BITS(NUM_INPUTS, NUM_OUTPUTS);
     localparam REQ_DATAW    = AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4;
-    localparam RSP_DATAW    = AXI_DATA_WIDTH+1+AXI_TID_WIDTH;
+    localparam RSP_DATAW    = AXI_DATA_WIDTH+1+AXI_TID_WIDTH+2;
 
     `STATIC_ASSERT ((NUM_INPUTS >= NUM_OUTPUTS), ("invalid parameter"))
 
@@ -114,7 +113,7 @@ module VX_axi_read_mem_arb #(
         m_axi_arqos_0,
         m_axi_arregion_0
     };
-    assign m_axi_arready_0 = req_ready_in[0];
+    assign m_axi_arready_0 = req_ready_in[0];    
 
     assign req_valid_in[1] = m_axi_arvalid_1;
     assign req_data_in[1] = {
@@ -200,7 +199,7 @@ module VX_axi_read_mem_arb #(
         );
 
         assign rsp_valid_in[i] = m_axi_rvalid;
-        assign rsp_data_in[i] = {rsp_tag_out, m_axi_rlast, m_axi_rdata};
+        assign rsp_data_in[i] = {rsp_tag_out, m_axi_rlast, m_axi_rresp, m_axi_rdata};
         assign m_axi_rready = rsp_ready_in[i];
 
         if (NUM_INPUTS > 1) begin : g_rsp_sel_in
@@ -231,7 +230,8 @@ module VX_axi_read_mem_arb #(
     assign {
         m_axi_rid_0,
         m_axi_rlast_0,
-        m_axi_rdata_0
+        m_axi_rresp_0,
+        m_axi_rdata_0  
     } = rsp_data_out[0];
     assign rsp_ready_out[0] = m_axi_rready_0;
 
@@ -240,6 +240,7 @@ module VX_axi_read_mem_arb #(
     assign {
         m_axi_rid_1,
         m_axi_rlast_1,
+        m_axi_rresp_1,
         m_axi_rdata_1
     } = rsp_data_out[1];
     assign rsp_ready_out[1] = m_axi_rready_1;

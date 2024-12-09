@@ -67,7 +67,7 @@ module VX_afu_wrap #(
 	wire                                 m_axi_mem_awvalid_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_awready_a [C_M_AXI_MEM_NUM_BANKS];
     wire [C_M_AXI_MEM_ADDR_WIDTH-1:0]    m_axi_mem_awaddr_a [C_M_AXI_MEM_NUM_BANKS];
-    wire [C_M_AXI_MEM_ID_WIDTH-1:0]      m_axi_mem_awid_a [C_M_AXI_MEM_NUM_BANKS];
+    wire [C_M_AXI_MEM_ID_WIDTH:0]      m_axi_mem_awid_a [C_M_AXI_MEM_NUM_BANKS];
     wire [7:0]                           m_axi_mem_awlen_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_wvalid_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_wready_a [C_M_AXI_MEM_NUM_BANKS];
@@ -76,18 +76,18 @@ module VX_afu_wrap #(
     wire                                 m_axi_mem_wlast_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_bvalid_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_bready_a [C_M_AXI_MEM_NUM_BANKS];
-    wire [C_M_AXI_MEM_ID_WIDTH-1:0]      m_axi_mem_bid_a [C_M_AXI_MEM_NUM_BANKS];
+    wire [C_M_AXI_MEM_ID_WIDTH:0]      m_axi_mem_bid_a [C_M_AXI_MEM_NUM_BANKS];
     wire [1:0]                           m_axi_mem_bresp_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_arvalid_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_arready_a [C_M_AXI_MEM_NUM_BANKS];
     wire [C_M_AXI_MEM_ADDR_WIDTH-1:0]    m_axi_mem_araddr_a [C_M_AXI_MEM_NUM_BANKS];
-    wire [C_M_AXI_MEM_ID_WIDTH-1:0]      m_axi_mem_arid_a [C_M_AXI_MEM_NUM_BANKS];
+    wire [C_M_AXI_MEM_ID_WIDTH:0]      m_axi_mem_arid_a [C_M_AXI_MEM_NUM_BANKS];
     wire [7:0]                           m_axi_mem_arlen_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_rvalid_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_rready_a [C_M_AXI_MEM_NUM_BANKS];
     wire [C_M_AXI_MEM_DATA_WIDTH-1:0]    m_axi_mem_rdata_a [C_M_AXI_MEM_NUM_BANKS];
     wire                                 m_axi_mem_rlast_a [C_M_AXI_MEM_NUM_BANKS];
-    wire [C_M_AXI_MEM_ID_WIDTH-1:0]      m_axi_mem_rid_a [C_M_AXI_MEM_NUM_BANKS];
+    wire [C_M_AXI_MEM_ID_WIDTH:0]      m_axi_mem_rid_a [C_M_AXI_MEM_NUM_BANKS];
     wire [1:0]                           m_axi_mem_rresp_a [C_M_AXI_MEM_NUM_BANKS];
 
 	// convert memory interface to array

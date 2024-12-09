@@ -570,7 +570,7 @@ private:
     CData* awvalid;
     CData* awready;
     QData* awaddr;
-    IData* awid;
+    QData* awid;
     CData* awlen;
     CData* wvalid;
     CData* wready;
@@ -580,18 +580,18 @@ private:
     CData* arvalid;
     CData* arready;
     QData* araddr;
-    IData* arid;
+    QData* arid;
     CData* arlen;
     CData* rvalid;
     CData* rready;
     Vl_m_data_t* rdata;
     CData* rlast;
-    IData* rid;
+    QData* rid;
     CData* rresp;
     CData* bvalid;
     CData* bready;
     CData* bresp;
-    IData* bid;
+    QData* bid;
   } m_axi_mem_t;
 
   Vvortex_afu_shim* device_;

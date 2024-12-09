@@ -13,7 +13,6 @@
 
 `include "VX_platform.vh"
 
-`TRACING_OFF
 module VX_bits_remove #(
     parameter N   = 2,
     parameter S   = 1,
@@ -37,4 +36,3 @@ module VX_bits_remove #(
     `UNUSED_VAR (data_in)
 
 endmodule
-`TRACING_ON

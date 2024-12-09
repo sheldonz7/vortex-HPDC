@@ -1,7 +1,7 @@
 `include "VX_define.vh"
 
 module VX_axi_write_mem_arb #(
-    parameter NUM_INPUTS     = 1,
+    parameter NUM_INPUTS     = 2,
     parameter NUM_OUTPUTS    = 1,
     parameter TAG_SEL_IDX    = 0,
     parameter REQ_OUT_BUF    = 0,
@@ -96,10 +96,9 @@ module VX_axi_write_mem_arb #(
     input wire [1:0]                    m_axi_bresp
 
 );
-    localparam DATA_WIDTH   = AXI_DATA_WIDTH;
     localparam LOG_NUM_REQS = `ARB_SEL_BITS(NUM_INPUTS, NUM_OUTPUTS);
     localparam REQ_DATAW    = AXI_ADDR_WIDTH+AXI_TID_WIDTH+8+3+2+2+4+3+4+4+1+AXI_DATA_WIDTH+(AXI_DATA_WIDTH/8)+1;
-    localparam RSP_DATAW    = AXI_TID_WIDTH;
+    localparam RSP_DATAW    = AXI_TID_WIDTH+2;
 
     `STATIC_ASSERT ((NUM_INPUTS >= NUM_OUTPUTS), ("invalid parameter"))
 
@@ -130,6 +129,7 @@ module VX_axi_write_mem_arb #(
         m_axi_wlast_0
     };
     assign m_axi_awready_0 = req_ready_in[0];
+    assign m_axi_wready_0 = req_ready_in[0];
 
     assign req_valid_in[1] = m_axi_awvalid_1;
     assign req_data_in[1] = {
@@ -149,6 +149,7 @@ module VX_axi_write_mem_arb #(
         m_axi_wlast_1
     };
     assign m_axi_awready_1 = req_ready_in[1];
+    assign m_axi_wready_1 = req_ready_in[1];
 
     VX_stream_arb #(
         .NUM_INPUTS  (NUM_INPUTS),
@@ -196,7 +197,7 @@ module VX_axi_write_mem_arb #(
             m_axi_wstrb,
             m_axi_wlast
         } = req_data_out[i];
-        assign req_ready_out[i] = m_axi_awready;
+        assign req_ready_out[i] = m_axi_awready && m_axi_wready;
     end
 
     ///////////////////////////////////////////////////////////////////////////
@@ -223,7 +224,7 @@ module VX_axi_write_mem_arb #(
         );
 
         assign rsp_valid_in[i] = m_axi_bvalid;
-        assign rsp_data_in[i] = rsp_tag_out;
+        assign rsp_data_in[i] = {rsp_tag_out, m_axi_bresp};
         assign m_axi_bready = rsp_ready_in[i];
 
         if (NUM_INPUTS > 1) begin : g_rsp_sel_in
@@ -252,14 +253,16 @@ module VX_axi_write_mem_arb #(
 
     assign m_axi_bvalid_0 = rsp_valid_out[0];
     assign {
-        m_axi_bid_0
+        m_axi_bid_0,
+        m_axi_bresp_0
     } = rsp_data_out[0];
     assign rsp_ready_out[0] = m_axi_bready_0;
 
 
     assign m_axi_bvalid_1 = rsp_valid_out[1];
     assign {
-        m_axi_bid_1
+        m_axi_bid_1,
+        m_axi_bresp_1
     } = rsp_data_out[1];
     assign rsp_ready_out[1] = m_axi_bready_1;
 

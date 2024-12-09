@@ -38,7 +38,7 @@
 	output wire                                 m_axi_mem_``i``_awvalid, \
 	input  wire                                 m_axi_mem_``i``_awready, \
 	output wire [C_M_AXI_MEM_ADDR_WIDTH-1:0] 	m_axi_mem_``i``_awaddr, \
-	output wire [C_M_AXI_MEM_ID_WIDTH-1:0]   	m_axi_mem_``i``_awid, \
+	output wire [C_M_AXI_MEM_ID_WIDTH:0]   	    m_axi_mem_``i``_awid, \
 	output wire [7:0]                           m_axi_mem_``i``_awlen, \
 	output wire                                 m_axi_mem_``i``_wvalid, \
 	input  wire                                 m_axi_mem_``i``_wready, \
@@ -48,18 +48,18 @@
 	output wire                                 m_axi_mem_``i``_arvalid, \
 	input  wire                                 m_axi_mem_``i``_arready, \
 	output wire [C_M_AXI_MEM_ADDR_WIDTH-1:0]   	m_axi_mem_``i``_araddr, \
-	output wire [C_M_AXI_MEM_ID_WIDTH-1:0]     	m_axi_mem_``i``_arid, \
+	output wire [C_M_AXI_MEM_ID_WIDTH:0]     	m_axi_mem_``i``_arid, \
 	output wire [7:0]                           m_axi_mem_``i``_arlen, \
 	input  wire                                 m_axi_mem_``i``_rvalid, \
 	output wire                                 m_axi_mem_``i``_rready, \
 	input  wire [C_M_AXI_MEM_DATA_WIDTH-1:0] 	m_axi_mem_``i``_rdata, \
 	input  wire                                 m_axi_mem_``i``_rlast, \
-	input  wire [C_M_AXI_MEM_ID_WIDTH-1:0]   	m_axi_mem_``i``_rid, \
+	input  wire [C_M_AXI_MEM_ID_WIDTH:0]   	    m_axi_mem_``i``_rid, \
 	input  wire [1:0]                           m_axi_mem_``i``_rresp, \
 	input  wire                                 m_axi_mem_``i``_bvalid, \
 	output wire                                 m_axi_mem_``i``_bready, \
 	input  wire [1:0]                           m_axi_mem_``i``_bresp, \
-	input  wire [C_M_AXI_MEM_ID_WIDTH-1:0]   	m_axi_mem_``i``_bid
+	input  wire [C_M_AXI_MEM_ID_WIDTH:0]   	    m_axi_mem_``i``_bid
 
 `define AXI_MEM_ARGS(i) \
     .m_axi_mem_``i``_awvalid(m_axi_mem_``i``_awvalid), \
