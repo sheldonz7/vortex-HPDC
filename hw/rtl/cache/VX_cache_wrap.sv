@@ -191,7 +191,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
         ) cache (
             .clk            (clk),
-            .reset          (reset),
+            .reset          (~reset),
         `ifdef PERF_ENABLE
             .cache_perf     (cache_perf),
         `endif
