@@ -618,6 +618,7 @@
 // Number of Banks
 `ifndef DCACHE_NUM_BANKS
 `define DCACHE_NUM_BANKS `MIN(`NUM_LSU_LANES, 4)
+//`define DCACHE_NUM_BANKS 1
 `endif
 
 // Core Response Queue Size

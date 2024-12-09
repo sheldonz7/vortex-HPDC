@@ -167,38 +167,38 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
 
     if (PASSTHRU == 0) begin : g_cache
 
-        if (ENABLE_HPDCACHE == 1) begin: g_hpdcache
-        VX_hpdcache #(
-            .INSTANCE_ID  (INSTANCE_ID),
-            .CACHE_SIZE   (CACHE_SIZE),
-            .LINE_SIZE    (LINE_SIZE),
-            .NUM_BANKS    (NUM_BANKS),
-            .NUM_WAYS     (NUM_WAYS),
-            .WORD_SIZE    (WORD_SIZE),
-            .NUM_REQS     (NUM_REQS),
-            .WRITE_ENABLE (WRITE_ENABLE),
-            .WRITEBACK    (WRITEBACK),
-            .DIRTY_BYTES  (DIRTY_BYTES),
-            .REPL_POLICY  (REPL_POLICY),
-            .CRSQ_SIZE    (CRSQ_SIZE),
-            .MSHR_SIZE    (MSHR_SIZE),
-            .MRSQ_SIZE    (MRSQ_SIZE),
-            .MREQ_SIZE    (MREQ_SIZE),
-            .UUID_WIDTH   (UUID_WIDTH),
-            .TAG_WIDTH    (TAG_WIDTH),
-            .FLAGS_WIDTH  (FLAGS_WIDTH),
-            .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
-            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
-        ) cache (
-            .clk            (clk),
-            .reset          (~reset),
-        `ifdef PERF_ENABLE
-            .cache_perf     (cache_perf),
-        `endif
-            .core_bus_if    (core_bus_cache_if),
-            .mem_bus_if     (mem_bus_cache_if)
-        );
-        end else begin : g_vx_cache
+        // if (ENABLE_HPDCACHE == 1) begin: g_hpdcache
+        // VX_hpdcache #(
+        //     .INSTANCE_ID  (INSTANCE_ID),
+        //     .CACHE_SIZE   (CACHE_SIZE),
+        //     .LINE_SIZE    (LINE_SIZE),
+        //     .NUM_BANKS    (NUM_BANKS),
+        //     .NUM_WAYS     (NUM_WAYS),
+        //     .WORD_SIZE    (WORD_SIZE),
+        //     .NUM_REQS     (NUM_REQS),
+        //     .WRITE_ENABLE (WRITE_ENABLE),
+        //     .WRITEBACK    (WRITEBACK),
+        //     .DIRTY_BYTES  (DIRTY_BYTES),
+        //     .REPL_POLICY  (REPL_POLICY),
+        //     .CRSQ_SIZE    (CRSQ_SIZE),
+        //     .MSHR_SIZE    (MSHR_SIZE),
+        //     .MRSQ_SIZE    (MRSQ_SIZE),
+        //     .MREQ_SIZE    (MREQ_SIZE),
+        //     .UUID_WIDTH   (UUID_WIDTH),
+        //     .TAG_WIDTH    (TAG_WIDTH),
+        //     .FLAGS_WIDTH  (FLAGS_WIDTH),
+        //     .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
+        //     .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
+        // ) cache (
+        //     .clk            (clk),
+        //     .reset          (~reset),
+        // `ifdef PERF_ENABLE
+        //     .cache_perf     (cache_perf),
+        // `endif
+        //     .core_bus_if    (core_bus_cache_if),
+        //     .mem_bus_if     (mem_bus_cache_if)
+        // );
+        //end else begin : g_vx_cache
         VX_cache #(
             .INSTANCE_ID  (INSTANCE_ID),
             .CACHE_SIZE   (CACHE_SIZE),
@@ -229,7 +229,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .core_bus_if    (core_bus_cache_if),
             .mem_bus_if     (mem_bus_cache_if)
         );
-       end;
+       //end;
     end else begin : g_passthru
 
         for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_bus_cache_if

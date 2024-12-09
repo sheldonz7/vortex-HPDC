@@ -93,7 +93,7 @@ module VX_hpdcache_core_if_adapter
     // generate byte address from word address and remove tag bits    
     assign word_addr_no_tag = `CS_WORD_ADDR_NO_TAG(vx_core_bus.req_data.addr);
     
-    assign byte_addr_no_tag = word_addr_no_tag <<`CLOG2(WORD_SIZE); // core request is the word address, shift by
+    assign byte_addr_no_tag = {word_addr_no_tag, {`CLOG2(WORD_SIZE){1'b0}}}; // core request is the word address, shift by 2 to get byte offset
   
 
 
@@ -115,7 +115,7 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
     assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_LOAD : hpdcache_pkg::HPDCACHE_REQ_STORE);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
-    assign hpdcache_req.size = `CLOG2(WORD_SIZE); // always full word access
+    assign hpdcache_req.size = `CLOG2(WORD_SIZE)[2:0]; // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
     assign hpdcache_req.tid = vx_core_bus.req_data.tag;
     // memory request that need response: load(read), fence operation that is EOP (end of program) which is treated as read request
@@ -128,11 +128,11 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req.pma.io = 1'b0;
     assign hpdcache_req.pma.wr_policy_hint = WRITEBACK? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
     
-    assign hpdcache_req.abort = '0; // unused on Vortex
+    assign hpdcache_req_abort = '0; // unused on Vortex
     assign hpdcache_req_tag = '0; // unused on physically indexed request
     assign hpdcache_req_pma.uncacheable = 1'b0;    // unused on Vortex yet
     assign hpdcache_req_pma.io = 1'b0;
-    assign hpdcache_req_pma.wr_policy_hint = '0;  // unused on Vortex yet, only for virtual index
+    assign hpdcache_req_pma.wr_policy_hint = hpdcache_pkg::hpdcache_wr_policy_hint_t'('0);  // unused on Vortex yet, only for virtual index
 
 
     // // Response Path

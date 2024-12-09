@@ -252,76 +252,128 @@ module VX_hpdcache
     wire [`PERF_CTR_BITS-1:0] perf_collisions;
 `endif
 
- `include "hpdcache_typedef.svh"
 
-
-localparam int HPDCACHE_NREQUESTERS = NUM_REQS;   // number of hpdcache port == Vortex number of word requests every cycle
+localparam int HPDCACHE_NREQUESTERS = 1;   //
 
 // hpcache
     localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
         // HPDCache configuration for Vortex GPU
         // Core parameters
-        nRequesters: NUM_REQS,  // From Vortex NUM_REQS parameter
-        paWidth: `MEM_ADDR_WIDTH,  // From Vortex MEM_ADDR_WIDTH
-        wordWidth: `CS_WORD_WIDTH,  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
-        sets: `CS_LINES_PER_BANK,  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
-        ways: NUM_WAYS,  // From Vortex NUM_WAYS
-        clWords: `CS_WORDS_PER_LINE,  // From Vortex CS_WORDS_PER_LINE (LINE_SIZE/WORD_SIZE)
-        reqWords: 1,  // Single word requests
+        nRequesters: HPDCACHE_NREQUESTERS,  // should be set as NUMBER of INPUT of Vortex_cache_cluster, set to 1 for test
+        paWidth: int'(`MEM_ADDR_WIDTH),  // From Vortex MEM_ADDR_WIDTH, 
+        wordWidth: int'(`CS_WORD_WIDTH),  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
+        sets: int'(`CS_LINES_PER_BANK),  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
+        ways: int'(NUM_WAYS),  // From Vortex NUM_WAYS
+        clWords: int'(`CS_WORDS_PER_LINE),  // From Vortex CS_WORDS_PER_LINE (LINE_SIZE/WORD_SIZE)
+        reqWords: int'(1),  // Single word requests
 
         // Request tracking
-        reqTransIdWidth: TAG_WIDTH,  // core request tag width
-        reqSrcIdWidth: `CS_REQ_SEL_BITS,  // `CLOG2(NUM_REQS)
+        reqTransIdWidth: int'(TAG_WIDTH),  // core request tag width
+        reqSrcIdWidth: int'(`UP(`CS_REQ_SEL_BITS)),  // `CLOG2(NUM_REQS)
 
         // Cache organization
         victimSel: (REPL_POLICY == `CS_REPL_PLRU) ? hpdcache_pkg::HPDCACHE_VICTIM_PLRU :  // hpdcache does not support cyclic
                                                     hpdcache_pkg::HPDCACHE_VICTIM_RANDOM,
 
         // Data RAM configuration
-        dataWaysPerRamWord: __minu(NUM_WAYS, 128/`CS_WORD_WIDTH),
-        dataSetsPerRam: `CS_LINES_PER_BANK,
-        dataRamByteEnable: 1'b1,
-        accessWords: __maxu(`CS_LINE_WIDTH / (2 * `CS_WORD_WIDTH), 1),
+        //dataWaysPerRamWord: int'(__minu(NUM_WAYS, 128/`CS_WORD_WIDTH)),
+        dataWaysPerRamWord: int'(2),
+        dataSetsPerRam: int'(`CS_LINES_PER_BANK),
+        dataRamByteEnable: bit'(1'b1),
+        // accessWords: int'(__maxu(`CS_LINE_WIDTH / (2 * `CS_WORD_WIDTH), 1)),
+        accessWords: int'(4),
 
         // MSHR configuration
-        mshrSets: (MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2,
-        mshrWays: (MSHR_SIZE < 16) ? MSHR_SIZE : 2,
-        mshrWaysPerRamWord: (MSHR_SIZE < 16) ? MSHR_SIZE : 2,
-        mshrSetsPerRam: (MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2,
-        mshrRamByteEnable: 1'b1,
-        mshrUseRegbank: (MSHR_SIZE < 16),
+        mshrSets: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
+        mshrWays: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),
+        mshrWaysPerRamWord: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),
+        mshrSetsPerRam: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
+        mshrRamByteEnable: bit'(1'b1),
+        mshrUseRegbank: bit'(MSHR_SIZE < 16),
 
         // Core response handling
-        refillCoreRspFeedthrough: 1'b1,
-        refillFifoDepth: 2,
+        refillCoreRspFeedthrough: bit'(1'b1),
+        refillFifoDepth: int'(2),
 
         // Write buffer configuration
-        wbufDirEntries: MREQ_SIZE,  // From Vortex MREQ_SIZE
-        wbufDataEntries: MREQ_SIZE, 
-        wbufWords: 1,
-        wbufTimecntWidth: 3,
+        wbufDirEntries: int'(MREQ_SIZE),  // From Vortex MREQ_SIZE
+        wbufDataEntries: int'(MREQ_SIZE), 
+        wbufWords: int'(1),
+        wbufTimecntWidth: int'(3),
 
         // Request tracking
-        rtabEntries: 4,
+        rtabEntries: int'(4),
 
         // Flush handling
-        flushEntries: 0,
-        flushFifoDepth: 0,
+        flushEntries: 8,
+        flushFifoDepth: 4,
 
         // Memory interface
-        memAddrWidth: `CS_LINE_ADDR_WIDTH,  // From Vortex CS_MEM_ADDR_WIDTH
-        memIdWidth: MEM_TAG_WIDTH,  // From Vortex MEM_TAG_WIDTH
-        memDataWidth: `CS_LINE_WIDTH,  // From Vortex CS_LINE_WIDTH (8 * LINE_SIZE)
+        memAddrWidth: int'(`CS_LINE_ADDR_WIDTH),  // From Vortex CS_MEM_ADDR_WIDTH
+        memIdWidth: int'(MEM_TAG_WIDTH),  // From Vortex MEM_TAG_WIDTH
+        memDataWidth: int'(`CS_LINE_WIDTH),  // From Vortex CS_LINE_WIDTH (8 * LINE_SIZE)
 
         // Write policies
-        wtEn: WRITE_ENABLE,  // From Vortex WRITE_ENABLE
-        wbEn: WRITEBACK    // From Vortex WRITEBACK
+        wtEn: bit'(WRITE_ENABLE),  // From Vortex WRITE_ENABLE
+        wbEn: bit'(WRITEBACK)    // From Vortex WRITEBACK
 
     };
+
+
+
+  // Print at elaboration time
+  initial begin
+    $display("HPDcache Configuration:");
+    $display("  nRequesters: %0d", HPDcacheUserCfg.nRequesters);
+    $display("  paWidth: %0d", HPDcacheUserCfg.paWidth);
+    $display("  wordWidth: %0d", HPDcacheUserCfg.wordWidth);
+    $display("  sets: %0d", HPDcacheUserCfg.sets);
+    $display("  ways: %0d", HPDcacheUserCfg.ways);
+    $display("  clWords: %0d", HPDcacheUserCfg.clWords);
+    $display("  reqWords: %0d", HPDcacheUserCfg.reqWords);
+    $display("  reqTransIdWidth: %0d", HPDcacheUserCfg.reqTransIdWidth);
+    $display("  reqSrcIdWidth: %0d", HPDcacheUserCfg.reqSrcIdWidth);
+    $display("  victimSel: %0d", HPDcacheUserCfg.victimSel);
+    $display("  dataWaysPerRamWord: %0d", HPDcacheUserCfg.dataWaysPerRamWord);
+    $display("  dataSetsPerRam: %0d", HPDcacheUserCfg.dataSetsPerRam);
+    $display("  dataRamByteEnable: %0d", HPDcacheUserCfg.dataRamByteEnable);
+    $display("  accessWords: %0d", HPDcacheUserCfg.accessWords);
+    $display("  mshrSets: %0d", HPDcacheUserCfg.mshrSets);
+    $display("  mshrWays: %0d", HPDcacheUserCfg.mshrWays);
+    $display("  mshrWaysPerRamWord: %0d", HPDcacheUserCfg.mshrWaysPerRamWord);
+    $display("  mshrSetsPerRam: %0d", HPDcacheUserCfg.mshrSetsPerRam);
+    $display("  mshrRamByteEnable: %0d", HPDcacheUserCfg.mshrRamByteEnable);
+    $display("  mshrUseRegbank: %0d", HPDcacheUserCfg.mshrUseRegbank);
+    $display("  refillCoreRspFeedthrough: %0d", HPDcacheUserCfg.refillCoreRspFeedthrough);
+    $display("  refillFifoDepth: %0d", HPDcacheUserCfg.refillFifoDepth);
+    $display("  wbufDirEntries: %0d", HPDcacheUserCfg.wbufDirEntries);
+    $display("  wbufDataEntries: %0d", HPDcacheUserCfg.wbufDataEntries);
+    $display("  wbufWords: %0d", HPDcacheUserCfg.wbufWords);
+    $display("  wbufTimecntWidth: %0d", HPDcacheUserCfg.wbufTimecntWidth);
+    $display("  rtabEntries: %0d", HPDcacheUserCfg.rtabEntries);
+    $display("  flushEntries: %0d", HPDcacheUserCfg.flushEntries);
+    $display("  flushFifoDepth: %0d", HPDcacheUserCfg.flushFifoDepth);
+    $display("  memAddrWidth: %0d", HPDcacheUserCfg.memAddrWidth);
+    $display("  memIdWidth: %0d", HPDcacheUserCfg.memIdWidth);
+    $display("  memDataWidth: %0d", HPDcacheUserCfg.memDataWidth);
+    $display("  wtEn: %0d", HPDcacheUserCfg.wtEn);
+    $display("  wbEn: %0d", HPDcacheUserCfg.wbEn);
+  end
+
+
+
 
     localparam hpdcache_pkg::hpdcache_cfg_t HPDcacheCfg = hpdcache_pkg::hpdcacheBuildConfig(
       HPDcacheUserCfg
     );
+
+    `STATIC_ASSERT(HPDcacheCfg.u.wordWidth < 0, ("wordwidth: %0d", HPDcacheCfg.u.wordWidth))
+    `STATIC_ASSERT(HPDcacheUserCfg.wordWidth < 0, ("user: wordwidth: %0d", HPDcacheUserCfg.wordWidth))
+    `STATIC_ASSERT(HPDcacheUserCfg.accessWords < 0, ("user: accesswords: %0d", HPDcacheUserCfg.accessWords))
+    `STATIC_ASSERT(HPDcacheUserCfg.paWidth < 0, ("pawidth: %0d", HPDcacheCfg.u.paWidth))
+    `STATIC_ASSERT(HPDcacheUserCfg.memAddrWidth < 0, ("memAddrwidth: %0d", HPDcacheCfg.u.memAddrWidth))
+    `STATIC_ASSERT(NUM_BANKS < 0, ("numbanks: %0d", NUM_BANKS))
+    `STATIC_ASSERT(HPDcacheUserCfg.clWords < 0, ("clwords: %0d", HPDcacheUserCfg.clWords))
 
     // generate type definitions
 
