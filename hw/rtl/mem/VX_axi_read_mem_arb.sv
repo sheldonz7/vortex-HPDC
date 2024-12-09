@@ -230,8 +230,8 @@ module VX_axi_read_mem_arb #(
     assign {
         m_axi_rid_0,
         m_axi_rlast_0,
-        m_axi_rdata_0,
-        m_axi_rresp_0   
+        m_axi_rresp_0,
+        m_axi_rdata_0  
     } = rsp_data_out[0];
     assign rsp_ready_out[0] = m_axi_rready_0;
 
@@ -240,8 +240,8 @@ module VX_axi_read_mem_arb #(
     assign {
         m_axi_rid_1,
         m_axi_rlast_1,
-        m_axi_rdata_1,
-        m_axi_rresp_1
+        m_axi_rresp_1,
+        m_axi_rdata_1
     } = rsp_data_out[1];
     assign rsp_ready_out[1] = m_axi_rready_1;
 

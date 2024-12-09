@@ -31,7 +31,7 @@
 `endif
 
 `ifndef PLATFORM_MEMORY_ID_WIDTH
-`define PLATFORM_MEMORY_ID_WIDTH 31
+`define PLATFORM_MEMORY_ID_WIDTH 32
 `endif
 
 `define GEN_AXI_MEM(i) \

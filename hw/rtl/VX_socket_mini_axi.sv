@@ -27,10 +27,6 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     input wire              clk,
     input wire              reset,
 
-`ifdef PERF_ENABLE
-    VX_mem_perf_if.slave    mem_perf_if,
-`endif
-
     // DCRs
     VX_dcr_bus_if.slave     dcr_bus_if,
 
@@ -84,47 +80,9 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     input wire [AXI_TID_WIDTH:0]        m_axi_rid [AXI_NUM_BANKS],
     input wire [1:0]                    m_axi_rresp [AXI_NUM_BANKS],
 
-`ifdef GBAR_ENABLE
-    // Barrier
-    VX_gbar_bus_if.master   gbar_bus_if,
-`endif
     // Status
     output wire             busy
 );
-
-    // localparam ICACHE_AXI_NUM_BANKS = 1;
-    // localparam DCACHE_AXI_NUM_BANKS = 1;
-
-`ifdef SCOPE
-    localparam scope_core = 0;
-    `SCOPE_IO_SWITCH (`SOCKET_SIZE);
-`endif
-
-`ifdef GBAR_ENABLE
-    VX_gbar_bus_if per_core_gbar_bus_if[`SOCKET_SIZE]();
-
-    VX_gbar_arb #(
-        .NUM_REQS (`SOCKET_SIZE),
-        .OUT_BUF  ((`SOCKET_SIZE > 1) ? 2 : 0)
-    ) gbar_arb (
-        .clk        (clk),
-        .reset      (reset),
-        .bus_in_if  (per_core_gbar_bus_if),
-        .bus_out_if (gbar_bus_if)
-    );
-`endif
-
-    ///////////////////////////////////////////////////////////////////////////
-
-`ifdef PERF_ENABLE
-    VX_mem_perf_if mem_perf_tmp_if();
-    assign mem_perf_tmp_if.l2cache = mem_perf_if.l2cache;
-    assign mem_perf_tmp_if.l3cache = mem_perf_if.l3cache;
-    assign mem_perf_tmp_if.lmem = 'x;
-    assign mem_perf_tmp_if.mem = mem_perf_if.mem;
-`endif
-
-    ///////////////////////////////////////////////////////////////////////////
 
     localparam DST_LDATAW = `CLOG2(AXI_DATA_WIDTH);
     localparam SRC_LDATAW = `CLOG2(`VX_MEM_DATA_WIDTH);
@@ -132,123 +90,55 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     localparam VX_MEM_TAG_A_WIDTH  = `VX_MEM_TAG_WIDTH + `MAX(SUB_LDATAW, 0);
     localparam VX_MEM_ADDR_A_WIDTH = `VX_MEM_ADDR_WIDTH - SUB_LDATAW;
 
-    wire                            mem_req_valid;
-    wire                            mem_req_rw;
-    wire [`VX_MEM_BYTEEN_WIDTH-1:0] mem_req_byteen;
-    wire [`VX_MEM_ADDR_WIDTH-1:0]   mem_req_addr;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   mem_req_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    mem_req_tag;
-    wire                            mem_req_ready;
-
-    wire                            mem_rsp_valid;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   mem_rsp_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    mem_rsp_tag;
-    `UNUSED_VAR(mem_rsp_tag[51:48]);
-    wire                            mem_rsp_ready;
-
-
     // Memory AXI bus
     // AXI write request address channel
-     wire                         icache_m_axi_awvalid [AXI_NUM_BANKS];
-    wire                          icache_m_axi_awready [AXI_NUM_BANKS];
-     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_awaddr [AXI_NUM_BANKS];
-     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_awid [AXI_NUM_BANKS];
-     wire [7:0]                   icache_m_axi_awlen [AXI_NUM_BANKS];
-     wire [2:0]                   icache_m_axi_awsize [AXI_NUM_BANKS];
-     wire [1:0]                   icache_m_axi_awburst [AXI_NUM_BANKS];
-     wire [1:0]                   icache_m_axi_awlock [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_awcache [AXI_NUM_BANKS];
-     wire [2:0]                   icache_m_axi_awprot [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_awqos [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_awregion [AXI_NUM_BANKS];
+    wire                         icache_m_axi_awvalid [AXI_NUM_BANKS];
+    wire                         icache_m_axi_awready [AXI_NUM_BANKS];
+    wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_awaddr [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]     icache_m_axi_awid [AXI_NUM_BANKS];
+    wire [7:0]                   icache_m_axi_awlen [AXI_NUM_BANKS];
+    wire [2:0]                   icache_m_axi_awsize [AXI_NUM_BANKS];
+    wire [1:0]                   icache_m_axi_awburst [AXI_NUM_BANKS];
+    wire [1:0]                   icache_m_axi_awlock [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_awcache [AXI_NUM_BANKS];
+    wire [2:0]                   icache_m_axi_awprot [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_awqos [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_awregion [AXI_NUM_BANKS];
 
     // AXI write request data channel
-     wire                         icache_m_axi_wvalid [AXI_NUM_BANKS];
-    wire                          icache_m_axi_wready [AXI_NUM_BANKS];
-     wire [AXI_DATA_WIDTH-1:0]    icache_m_axi_wdata [AXI_NUM_BANKS];
-     wire [AXI_DATA_WIDTH/8-1:0]  icache_m_axi_wstrb [AXI_NUM_BANKS];
-     wire                         icache_m_axi_wlast [AXI_NUM_BANKS];
+    wire                         icache_m_axi_wvalid [AXI_NUM_BANKS];
+    wire                         icache_m_axi_wready [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH-1:0]    icache_m_axi_wdata [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH/8-1:0]  icache_m_axi_wstrb [AXI_NUM_BANKS];
+    wire                         icache_m_axi_wlast [AXI_NUM_BANKS];
 
     // AXI write response channel
     wire                          icache_m_axi_bvalid [AXI_NUM_BANKS];
-     wire                         icache_m_axi_bready [AXI_NUM_BANKS];
+    wire                          icache_m_axi_bready [AXI_NUM_BANKS];
     wire [AXI_TID_WIDTH-1:0]      icache_m_axi_bid [AXI_NUM_BANKS];
     wire [1:0]                    icache_m_axi_bresp [AXI_NUM_BANKS];
 
     // AXI read request channel
-     wire                         icache_m_axi_arvalid [AXI_NUM_BANKS];
-    wire                          icache_m_axi_arready [AXI_NUM_BANKS];
-     wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_araddr [AXI_NUM_BANKS];
-     wire [AXI_TID_WIDTH-1:0]     icache_m_axi_arid [AXI_NUM_BANKS];
-     wire [7:0]                   icache_m_axi_arlen [AXI_NUM_BANKS];
-     wire [2:0]                   icache_m_axi_arsize [AXI_NUM_BANKS];
-     wire [1:0]                   icache_m_axi_arburst [AXI_NUM_BANKS];
-     wire [1:0]                   icache_m_axi_arlock [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_arcache [AXI_NUM_BANKS];
-     wire [2:0]                   icache_m_axi_arprot [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_arqos [AXI_NUM_BANKS];
-     wire [3:0]                   icache_m_axi_arregion [AXI_NUM_BANKS];
+    wire                         icache_m_axi_arvalid [AXI_NUM_BANKS];
+    wire                         icache_m_axi_arready [AXI_NUM_BANKS];
+    wire [AXI_ADDR_WIDTH-1:0]    icache_m_axi_araddr [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]     icache_m_axi_arid [AXI_NUM_BANKS];
+    wire [7:0]                   icache_m_axi_arlen [AXI_NUM_BANKS];
+    wire [2:0]                   icache_m_axi_arsize [AXI_NUM_BANKS];
+    wire [1:0]                   icache_m_axi_arburst [AXI_NUM_BANKS];
+    wire [1:0]                   icache_m_axi_arlock [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_arcache [AXI_NUM_BANKS];
+    wire [2:0]                   icache_m_axi_arprot [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_arqos [AXI_NUM_BANKS];
+    wire [3:0]                   icache_m_axi_arregion [AXI_NUM_BANKS];
 
     // AXI read response channel
     wire                          icache_m_axi_rvalid [AXI_NUM_BANKS];
-     wire                         icache_m_axi_rready [AXI_NUM_BANKS];
+    wire                          icache_m_axi_rready [AXI_NUM_BANKS];
     wire [AXI_DATA_WIDTH-1:0]     icache_m_axi_rdata [AXI_NUM_BANKS];
     wire                          icache_m_axi_rlast [AXI_NUM_BANKS];
     wire [AXI_TID_WIDTH-1:0]      icache_m_axi_rid [AXI_NUM_BANKS];
     wire [1:0]                    icache_m_axi_rresp [AXI_NUM_BANKS];
-
-    // dcache
-
-     // Memory AXI bus
-    // AXI write request address channel
-     wire                         dcache_m_axi_awvalid [AXI_NUM_BANKS];
-    wire                          dcache_m_axi_awready [AXI_NUM_BANKS];
-     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_awaddr [AXI_NUM_BANKS];
-     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_awid [AXI_NUM_BANKS];
-     wire [7:0]                   dcache_m_axi_awlen [AXI_NUM_BANKS];
-     wire [2:0]                   dcache_m_axi_awsize [AXI_NUM_BANKS];
-     wire [1:0]                   dcache_m_axi_awburst [AXI_NUM_BANKS];
-     wire [1:0]                   dcache_m_axi_awlock [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_awcache [AXI_NUM_BANKS];
-     wire [2:0]                   dcache_m_axi_awprot [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_awqos [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_awregion [AXI_NUM_BANKS];
-
-    // AXI write request data channel
-     wire                         dcache_m_axi_wvalid [AXI_NUM_BANKS];
-    wire                          dcache_m_axi_wready [AXI_NUM_BANKS];
-     wire [AXI_DATA_WIDTH-1:0]    dcache_m_axi_wdata [AXI_NUM_BANKS];
-     wire [AXI_DATA_WIDTH/8-1:0]  dcache_m_axi_wstrb [AXI_NUM_BANKS];
-     wire                         dcache_m_axi_wlast [AXI_NUM_BANKS];
-
-    // AXI write response channel
-    wire                          dcache_m_axi_bvalid [AXI_NUM_BANKS];
-     wire                         dcache_m_axi_bready [AXI_NUM_BANKS];
-    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_bid [AXI_NUM_BANKS];
-    wire [1:0]                    dcache_m_axi_bresp [AXI_NUM_BANKS];
-
-    // AXI read request channel
-     wire                         dcache_m_axi_arvalid [AXI_NUM_BANKS];
-    wire                          dcache_m_axi_arready [AXI_NUM_BANKS];
-     wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_araddr [AXI_NUM_BANKS];
-     wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_arid [AXI_NUM_BANKS];
-     wire [7:0]                   dcache_m_axi_arlen [AXI_NUM_BANKS];
-     wire [2:0]                   dcache_m_axi_arsize [AXI_NUM_BANKS];
-     wire [1:0]                   dcache_m_axi_arburst [AXI_NUM_BANKS];
-     wire [1:0]                   dcache_m_axi_arlock [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_arcache [AXI_NUM_BANKS];
-     wire [2:0]                   dcache_m_axi_arprot [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_arqos [AXI_NUM_BANKS];
-     wire [3:0]                   dcache_m_axi_arregion [AXI_NUM_BANKS];
-
-    // AXI read response channel
-    wire                          dcache_m_axi_rvalid [AXI_NUM_BANKS];
-     wire                         dcache_m_axi_rready [AXI_NUM_BANKS];
-    wire [AXI_DATA_WIDTH-1:0]     dcache_m_axi_rdata [AXI_NUM_BANKS];
-    wire                          dcache_m_axi_rlast [AXI_NUM_BANKS];
-    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_rid [AXI_NUM_BANKS];
-    wire [1:0]                    dcache_m_axi_rresp [AXI_NUM_BANKS];
-
 
     VX_mem_bus_if #(
         .DATA_SIZE (ICACHE_WORD_SIZE),
@@ -295,24 +185,6 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .mem_bus_if     (icache_mem_bus_if)
     );
 
-    assign mem_req_valid = icache_mem_bus_if.req_valid;
-    assign mem_req_rw    = icache_mem_bus_if.req_data.rw;
-    assign mem_req_byteen= icache_mem_bus_if.req_data.byteen;
-    assign mem_req_addr  = icache_mem_bus_if.req_data.addr;
-    assign mem_req_data  = icache_mem_bus_if.req_data.data;
-    assign mem_req_tag   = {4'b0, icache_mem_bus_if.req_data.tag};
-    assign icache_mem_bus_if.req_ready = mem_req_ready;
-    `UNUSED_VAR (icache_mem_bus_if.req_data.flags)
-
-    assign icache_mem_bus_if.rsp_valid = mem_rsp_valid;
-    assign icache_mem_bus_if.rsp_data.data  = mem_rsp_data;
-    assign icache_mem_bus_if.rsp_data.tag   = mem_rsp_tag[47:0];
-    assign mem_rsp_ready = icache_mem_bus_if.rsp_ready;
-
-    
-
-
-
     wire                            mem_req_valid_a;
     wire                            mem_req_rw_a;
     wire [(AXI_DATA_WIDTH/8)-1:0]   mem_req_byteen_a;
@@ -327,30 +199,30 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     wire                            mem_rsp_ready_a;
 
     VX_mem_adapter #(
-        .SRC_DATA_WIDTH (`VX_MEM_DATA_WIDTH),
+        .SRC_DATA_WIDTH (ICACHE_LINE_SIZE*8),
         .DST_DATA_WIDTH (AXI_DATA_WIDTH),
-        .SRC_ADDR_WIDTH (`VX_MEM_ADDR_WIDTH),
+        .SRC_ADDR_WIDTH (`MEM_ADDR_WIDTH - `CLOG2(ICACHE_LINE_SIZE)),
         .DST_ADDR_WIDTH (VX_MEM_ADDR_A_WIDTH),
-        .SRC_TAG_WIDTH  (`VX_MEM_TAG_WIDTH),
+        .SRC_TAG_WIDTH  (ICACHE_MEM_TAG_WIDTH),
         .DST_TAG_WIDTH  (VX_MEM_TAG_A_WIDTH),
         .REQ_OUT_BUF    (0),
         .RSP_OUT_BUF    (0)
-    ) mem_adapter (
+    ) icache_mem_adapter (
         .clk                (clk),
         .reset              (reset),
 
-        .mem_req_valid_in   (mem_req_valid),
-        .mem_req_addr_in    (mem_req_addr),
-        .mem_req_rw_in      (mem_req_rw),
-        .mem_req_byteen_in  (mem_req_byteen),
-        .mem_req_data_in    (mem_req_data),
-        .mem_req_tag_in     (mem_req_tag),
-        .mem_req_ready_in   (mem_req_ready),
+        .mem_req_valid_in   (icache_mem_bus_if.req_valid),
+        .mem_req_addr_in    (icache_mem_bus_if.req_data.addr),
+        .mem_req_rw_in      (icache_mem_bus_if.req_data.rw),
+        .mem_req_byteen_in  (icache_mem_bus_if.req_data.byteen),
+        .mem_req_data_in    (icache_mem_bus_if.req_data.data),
+        .mem_req_tag_in     (icache_mem_bus_if.req_data.tag),
+        .mem_req_ready_in   (icache_mem_bus_if.req_ready),
 
-        .mem_rsp_valid_in   (mem_rsp_valid),
-        .mem_rsp_data_in    (mem_rsp_data),
-        .mem_rsp_tag_in     (mem_rsp_tag),
-        .mem_rsp_ready_in   (mem_rsp_ready),
+        .mem_rsp_valid_in   (icache_mem_bus_if.rsp_valid),
+        .mem_rsp_data_in    (icache_mem_bus_if.rsp_data.data),
+        .mem_rsp_tag_in     (icache_mem_bus_if.rsp_data.tag),
+        .mem_rsp_ready_in   (icache_mem_bus_if.rsp_ready),
 
         .mem_req_valid_out  (mem_req_valid_a),
         .mem_req_addr_out   (mem_req_addr_a),
@@ -375,7 +247,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .NUM_BANKS      (AXI_NUM_BANKS),
         .BANK_INTERLEAVE(0),
         .RSP_OUT_BUF    ((AXI_NUM_BANKS > 1) ? 2 : 0)
-    ) mem_adapter_icache (
+    ) icache_axi_adapter (
         .clk            (clk),
         .reset          (reset),
 
@@ -437,8 +309,59 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .m_axi_rresp    (icache_m_axi_rresp)
     );
 
-
     ///////////////////////////////////////////////////////////////////////////
+
+    // dcache
+
+    // Memory AXI bus
+    // AXI write request address channel
+    wire                         dcache_m_axi_awvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_awready [AXI_NUM_BANKS];
+    wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_awaddr [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_awid [AXI_NUM_BANKS];
+    wire [7:0]                   dcache_m_axi_awlen [AXI_NUM_BANKS];
+    wire [2:0]                   dcache_m_axi_awsize [AXI_NUM_BANKS];
+    wire [1:0]                   dcache_m_axi_awburst [AXI_NUM_BANKS];
+    wire [1:0]                   dcache_m_axi_awlock [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_awcache [AXI_NUM_BANKS];
+    wire [2:0]                   dcache_m_axi_awprot [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_awqos [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_awregion [AXI_NUM_BANKS];
+
+    // AXI write request data channel
+    wire                         dcache_m_axi_wvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_wready [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH-1:0]    dcache_m_axi_wdata [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH/8-1:0]  dcache_m_axi_wstrb [AXI_NUM_BANKS];
+    wire                         dcache_m_axi_wlast [AXI_NUM_BANKS];
+
+    // AXI write response channel
+    wire                          dcache_m_axi_bvalid [AXI_NUM_BANKS];
+    wire                         dcache_m_axi_bready [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_bid [AXI_NUM_BANKS];
+    wire [1:0]                    dcache_m_axi_bresp [AXI_NUM_BANKS];
+
+    // AXI read request channel
+    wire                         dcache_m_axi_arvalid [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_arready [AXI_NUM_BANKS];
+    wire [AXI_ADDR_WIDTH-1:0]    dcache_m_axi_araddr [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]     dcache_m_axi_arid [AXI_NUM_BANKS];
+    wire [7:0]                   dcache_m_axi_arlen [AXI_NUM_BANKS];
+    wire [2:0]                   dcache_m_axi_arsize [AXI_NUM_BANKS];
+    wire [1:0]                   dcache_m_axi_arburst [AXI_NUM_BANKS];
+    wire [1:0]                   dcache_m_axi_arlock [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_arcache [AXI_NUM_BANKS];
+    wire [2:0]                   dcache_m_axi_arprot [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_arqos [AXI_NUM_BANKS];
+    wire [3:0]                   dcache_m_axi_arregion [AXI_NUM_BANKS];
+
+    // AXI read response channel
+    wire                          dcache_m_axi_rvalid [AXI_NUM_BANKS];
+    wire                         dcache_m_axi_rready [AXI_NUM_BANKS];
+    wire [AXI_DATA_WIDTH-1:0]     dcache_m_axi_rdata [AXI_NUM_BANKS];
+    wire                          dcache_m_axi_rlast [AXI_NUM_BANKS];
+    wire [AXI_TID_WIDTH-1:0]      dcache_m_axi_rid [AXI_NUM_BANKS];
+    wire [1:0]                    dcache_m_axi_rresp [AXI_NUM_BANKS];
 
     VX_mem_bus_if #(
         .DATA_SIZE (DCACHE_WORD_SIZE),
@@ -451,22 +374,6 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     ) dcache_mem_bus_if();
 
     `RESET_RELAY (dcache_reset, reset);
-
-
-    wire                            dcache_mem_req_valid;
-    wire                            dcache_mem_req_rw;
-    wire [`VX_MEM_BYTEEN_WIDTH-1:0] dcache_mem_req_byteen;
-    wire [`VX_MEM_ADDR_WIDTH-1:0]   dcache_mem_req_addr;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   dcache_mem_req_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    dcache_mem_req_tag;
-    wire                            dcache_mem_req_ready;
-
-    wire                            dcache_mem_rsp_valid;
-    wire [`VX_MEM_DATA_WIDTH-1:0]   dcache_mem_rsp_data;
-    wire [`VX_MEM_TAG_WIDTH-1:0]    dcache_mem_rsp_tag;
-    `UNUSED_VAR(dcache_mem_rsp_tag[51]);
-    wire                            dcache_mem_rsp_ready;
-
 
     VX_cache_cluster #(
         .INSTANCE_ID    (`SFORMATF(("%s-dcache", INSTANCE_ID))),
@@ -505,21 +412,6 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
 
     );
 
-    assign dcache_mem_req_valid = dcache_mem_bus_if.req_valid;
-    assign dcache_mem_req_rw    = dcache_mem_bus_if.req_data.rw;
-    assign dcache_mem_req_byteen= dcache_mem_bus_if.req_data.byteen;
-    assign dcache_mem_req_addr  = dcache_mem_bus_if.req_data.addr;
-    assign dcache_mem_req_data  = dcache_mem_bus_if.req_data.data;
-    assign dcache_mem_req_tag   = {1'b0, dcache_mem_bus_if.req_data.tag};
-    assign dcache_mem_bus_if.req_ready = dcache_mem_req_ready;
-    `UNUSED_VAR (dcache_mem_bus_if.req_data.flags)
-
-    assign dcache_mem_bus_if.rsp_valid = dcache_mem_rsp_valid;
-    assign dcache_mem_bus_if.rsp_data.data  = dcache_mem_rsp_data;
-    assign dcache_mem_bus_if.rsp_data.tag   = dcache_mem_rsp_tag[50:0];
-    assign dcache_mem_rsp_ready = dcache_mem_bus_if.rsp_ready;
-
-
     wire                            dcache_mem_req_valid_a;
     wire                            dcache_mem_req_rw_a;
     wire [(AXI_DATA_WIDTH/8)-1:0]   dcache_mem_req_byteen_a;
@@ -534,30 +426,30 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
     wire                            dcache_mem_rsp_ready_a;
 
     VX_mem_adapter #(
-        .SRC_DATA_WIDTH (`VX_MEM_DATA_WIDTH),
+        .SRC_DATA_WIDTH (DCACHE_LINE_SIZE*8),
         .DST_DATA_WIDTH (AXI_DATA_WIDTH),
-        .SRC_ADDR_WIDTH (`VX_MEM_ADDR_WIDTH),
+        .SRC_ADDR_WIDTH (`MEM_ADDR_WIDTH - `CLOG2(DCACHE_LINE_SIZE)),
         .DST_ADDR_WIDTH (VX_MEM_ADDR_A_WIDTH),
-        .SRC_TAG_WIDTH  (`VX_MEM_TAG_WIDTH),
+        .SRC_TAG_WIDTH  (DCACHE_MEM_TAG_WIDTH),
         .DST_TAG_WIDTH  (VX_MEM_TAG_A_WIDTH),
         .REQ_OUT_BUF    (0),
         .RSP_OUT_BUF    (0)
-    ) mem_adapter_dcache (
+    ) dcache_mem_adapter (
         .clk                (clk),
         .reset              (reset),
 
-        .mem_req_valid_in   (dcache_mem_req_valid),
-        .mem_req_addr_in    (dcache_mem_req_addr),
-        .mem_req_rw_in      (dcache_mem_req_rw),
-        .mem_req_byteen_in  (dcache_mem_req_byteen),
-        .mem_req_data_in    (dcache_mem_req_data),
-        .mem_req_tag_in     (dcache_mem_req_tag),
-        .mem_req_ready_in   (dcache_mem_req_ready),
+        .mem_req_valid_in   (dcache_mem_bus_if.req_valid),
+        .mem_req_addr_in    (dcache_mem_bus_if.req_data.addr),
+        .mem_req_rw_in      (dcache_mem_bus_if.req_data.rw),
+        .mem_req_byteen_in  (dcache_mem_bus_if.req_data.byteen),
+        .mem_req_data_in    (dcache_mem_bus_if.req_data.data),
+        .mem_req_tag_in     (dcache_mem_bus_if.req_data.tag),
+        .mem_req_ready_in   (dcache_mem_bus_if.req_ready),
 
-        .mem_rsp_valid_in   (dcache_mem_rsp_valid),
-        .mem_rsp_data_in    (dcache_mem_rsp_data),
-        .mem_rsp_tag_in     (dcache_mem_rsp_tag),
-        .mem_rsp_ready_in   (dcache_mem_rsp_ready),
+        .mem_rsp_valid_in   (dcache_mem_bus_if.rsp_valid),
+        .mem_rsp_data_in    (dcache_mem_bus_if.rsp_data.data),
+        .mem_rsp_tag_in     (dcache_mem_bus_if.rsp_data.tag),
+        .mem_rsp_ready_in   (dcache_mem_bus_if.rsp_ready),
 
         .mem_req_valid_out  (dcache_mem_req_valid_a),
         .mem_req_addr_out   (dcache_mem_req_addr_a),
@@ -582,7 +474,7 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .NUM_BANKS      (AXI_NUM_BANKS),
         .BANK_INTERLEAVE(0),
         .RSP_OUT_BUF    ((AXI_NUM_BANKS > 1) ? 2 : 0)
-    ) axi_adapter (
+    ) dcache_axi_adapter (
         .clk            (clk),
         .reset          (reset),
 
@@ -644,42 +536,8 @@ module VX_socket_mini_axi import VX_gpu_pkg::*; #(
         .m_axi_rresp    (dcache_m_axi_rresp)
     );
 
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    // VX_mem_bus_if #(
-    //     .DATA_SIZE (`L1_LINE_SIZE),
-    //     .TAG_WIDTH (L1_MEM_TAG_WIDTH)
-    // ) l1_mem_bus_if[2]();
-
-    // VX_mem_bus_if #(
-    //     .DATA_SIZE (`L1_LINE_SIZE),
-    //     .TAG_WIDTH (L1_MEM_ARB_TAG_WIDTH)
-    // ) l1_mem_arb_bus_if[1]();
-
-    // `ASSIGN_VX_MEM_BUS_IF_X (l1_mem_bus_if[0], icache_mem_bus_if, L1_MEM_TAG_WIDTH, ICACHE_MEM_TAG_WIDTH);
-    // `ASSIGN_VX_MEM_BUS_IF_X (l1_mem_bus_if[1], dcache_mem_bus_if, L1_MEM_TAG_WIDTH, DCACHE_MEM_TAG_WIDTH);
-
-    // VX_mem_arb #(
-    //     .NUM_INPUTS (2),
-    //     .DATA_SIZE  (`L1_LINE_SIZE),
-    //     .TAG_WIDTH  (L1_MEM_TAG_WIDTH),
-    //     .TAG_SEL_IDX(0),
-    //     .ARBITER    ("P"), // prioritize the icache
-    //     .REQ_OUT_BUF(3),
-    //     .RSP_OUT_BUF(3)
-    // ) mem_arb (
-    //     .clk        (clk),
-    //     .reset      (reset),
-    //     .bus_in_if  (l1_mem_bus_if),
-    //     .bus_out_if (l1_mem_arb_bus_if)
-    // );
-
-    // `ASSIGN_VX_MEM_BUS_IF (mem_bus_if, l1_mem_arb_bus_if[0]);
-
- 
- 
     for (genvar bank_id = 0; bank_id < AXI_NUM_BANKS; ++bank_id) begin: axi_arb
+
         VX_axi_read_mem_arb #(
             .TAG_SEL_IDX(0),
             .ARBITER    ("P"), // prioritize the icache

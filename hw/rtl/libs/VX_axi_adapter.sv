@@ -13,7 +13,6 @@
 
 `include "VX_platform.vh"
 
-`TRACING_OFF
 module VX_axi_adapter #(
     parameter DATA_WIDTH     = 512,
     parameter ADDR_WIDTH_IN  = 1,
@@ -253,4 +252,3 @@ module VX_axi_adapter #(
     );
 
 endmodule
-`TRACING_ON
