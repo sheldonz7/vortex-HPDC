@@ -280,8 +280,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         dataWaysPerRamWord: int'(2),
         dataSetsPerRam: int'(`CS_LINES_PER_BANK),
         dataRamByteEnable: bit'(1'b1),
-        // accessWords: int'(__maxu(`CS_LINE_WIDTH / (2 * `CS_WORD_WIDTH), 1)),
-        accessWords: int'(4),
+        accessWords: int'(__maxu(`CS_WORDS_PER_LINE / 2, 1)),
+        //accessWords: int'(4)
 
         // MSHR configuration
         mshrSets: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
@@ -309,7 +309,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         flushFifoDepth: 4,
 
         // Memory interface
-        memAddrWidth: int'(`CS_LINE_ADDR_WIDTH),  // From Vortex CS_MEM_ADDR_WIDTH
+        memAddrWidth: int'(`MEM_ADDR_WIDTH),  // From Vortex CS_MEM_ADDR_WIDTH
         memIdWidth: int'(MEM_TAG_WIDTH),  // From Vortex MEM_TAG_WIDTH
         memDataWidth: int'(`CS_LINE_WIDTH),  // From Vortex CS_LINE_WIDTH (8 * LINE_SIZE)
 
@@ -409,7 +409,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     hpdcache_pkg::hpdcache_pma_t dcache_req_pma  [HPDCACHE_NREQUESTERS];
     logic                        dcache_rsp_valid[HPDCACHE_NREQUESTERS];
     hpdcache_rsp_t               dcache_rsp      [HPDCACHE_NREQUESTERS];
-    logic                        dcache_read_miss, dcache_write_miss;
+    logic                        evt_hpdc_read_miss, evt_hpdc_write_miss;
+
 
     logic dcache_enable;
 
@@ -602,6 +603,46 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
       .cfg_rtab_single_entry_i            (1'b0),
       .cfg_default_wb_i                   (1'b0)
     );
+
+    // memory interface adapter
+    VX_hpdcache_mem_if_adapter #(
+      .hpdcache_mem_id_t    (hpdcache_mem_id_t),
+      .hpdcache_mem_req_t   (hpdcache_mem_req_t),
+      .hpdcache_mem_req_w_t (hpdcache_mem_req_w_t),
+      .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
+      .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
+
+      .MEM_DATA_SIZE        (LINE_SIZE),
+      .MEM_TAG_WIDTH        (MEM_TAG_WIDTH),
+      .TAG_SEL_IDX          (0),
+      .MEM_OUT_BUF          (MEM_OUT_BUF)
+    ) mem_if_adapter (
+      .clk(clk),
+      .reset(reset),
+
+      .mem_bus_if(mem_bus_if),
+
+      .mem_req_read_ready(dcache_read_ready),
+      .mem_req_read_valid(dcache_read_valid),
+      .mem_req_read      (dcache_read),
+
+      .mem_resp_read_ready(dcache_read_resp_ready),
+      .mem_resp_read_valid(dcache_read_resp_valid),
+      .mem_resp_read      (dcache_read_resp),
+
+      .mem_req_write_ready(dcache_write_ready),
+      .mem_req_write_valid(dcache_write_valid),
+      .mem_req_write      (dcache_write),
+
+      .mem_req_write_data_ready(dcache_write_data_ready),
+      .mem_req_write_data_valid(dcache_write_data_valid),
+      .mem_req_write_data      (dcache_write_data),
+
+      .mem_resp_write_ready(dcache_write_resp_ready),
+      .mem_resp_write_valid(dcache_write_resp_valid),
+      .mem_resp_write      (dcache_write_resp)
+    );
+
 
     // // Bank responses gather
 

@@ -30,7 +30,14 @@ module VX_hpdcache_core_if_adapter
     // Size of a word in bytes
     parameter WORD_SIZE             = 16,
 
-    parameter WRITEBACK             = 0
+    parameter WRITEBACK             = 0,
+
+    // bypass
+    parameter PASSTHRU              = 0,
+
+    // uncacheable
+    parameter NC_ENABLE             = 0
+
     // parameter type dcache_req_i_t = logic,
     // parameter type dcache_req_o_t = logic
 ) (
@@ -66,14 +73,14 @@ module VX_hpdcache_core_if_adapter
     // input wire hpdcache_req_ready,
 
     output logic                        hpdcache_req_valid,
-    input logic                        hpdcache_req_ready,
-    output hpdcache_req_t               hpdcache_req     ,
+    input logic                         hpdcache_req_ready,
+    output hpdcache_req_t               hpdcache_req      ,
     output logic                        hpdcache_req_abort,
     output hpdcache_tag_t               hpdcache_req_tag  ,
     output hpdcache_pkg::hpdcache_pma_t hpdcache_req_pma  ,
     
-    input logic                        hpdcache_rsp_valid,
-    input hpdcache_rsp_t               hpdcache_rsp   
+    input logic                         hpdcache_rsp_valid,
+    input hpdcache_rsp_t                hpdcache_rsp   
 
 );
     logic [`CS_WORD_ADDR_NO_TAG_WIDTH-1:0] word_addr_no_tag;
@@ -113,7 +120,7 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req_valid = vx_core_bus.req_valid;
     assign hpdcache_req.addr_offset = byte_addr_no_tag;
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
-    assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_LOAD : hpdcache_pkg::HPDCACHE_REQ_STORE);
+    assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
     assign hpdcache_req.size = `CLOG2(WORD_SIZE)[2:0]; // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
@@ -124,7 +131,10 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req.need_rsp = vx_core_bus.req_data.rw ? 1'b0 : 1'b1;
     assign hpdcache_req.phys_indexed = 1'b1;
     assign hpdcache_req.addr_tag = addr_tag;
-    assign hpdcache_req.pma.uncacheable = 1'b0;
+    assign hpdcache_req.pma.uncacheable = 1'b0;   // for now, all non-cacheable request is taken care by the VX cache bypass module   
+    
+    
+    //core_bus_in_if[i].req_data.flags[`MEM_REQ_FLAG_IO]
     assign hpdcache_req.pma.io = 1'b0;
     assign hpdcache_req.pma.wr_policy_hint = WRITEBACK? hpdcache_pkg::HPDCACHE_WR_POLICY_WB : hpdcache_pkg::HPDCACHE_WR_POLICY_WT;
     
