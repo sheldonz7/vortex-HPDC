@@ -105,7 +105,7 @@ module VX_hpdcache_core_if_adapter
 
 
     // flush operation detection
-    assign flush_op = vx_core_bus.req_data.flags[`MEM_REQ_FLAG_FLUSH];
+    assign flush_op = vx_core_bus.req_data.flags[`MEM_REQ_FLAG_FLUSH] && vx_core_bus.req_valid;
 
 
     // Request and Response Control Logic
@@ -120,7 +120,7 @@ module VX_hpdcache_core_if_adapter
     assign hpdcache_req_valid = vx_core_bus.req_valid;
     assign hpdcache_req.addr_offset = byte_addr_no_tag;
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
-    assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL :  (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
+    assign hpdcache_req.op = flush_op ? (WRITEBACK ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL : hpdcache_pkg::HPDCACHE_REQ_CMO_INVAL_ALL) : (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
     assign hpdcache_req.size = `CLOG2(WORD_SIZE)[2:0]; // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;

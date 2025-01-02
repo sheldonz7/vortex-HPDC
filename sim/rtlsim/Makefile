@@ -14,7 +14,6 @@ CXXFLAGS += -I$(THIRD_PARTY_DIR)/ramulator/src
 
 
 
-
 CXXFLAGS += -DXLEN_$(XLEN)
 
 LDFLAGS += $(THIRD_PARTY_DIR)/softfloat/build/Linux-x86_64-GCC/softfloat.a
@@ -52,6 +51,7 @@ VL_FLAGS = --exe
 VL_FLAGS += --language 1800-2009 --assert -Wall -Wpedantic
 VL_FLAGS += -Wno-DECLFILENAME -Wno-REDEFMACRO
 VL_FLAGS += -Wno-pinconnectempty
+VL_FLAGS += -Wno-fatal
 VL_FLAGS += --x-initial unique --x-assign unique
 VL_FLAGS += verilator.vlt
 VL_FLAGS += -DSIMULATION -DSV_DPI

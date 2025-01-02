@@ -201,7 +201,7 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
             cur_mem_resp_write_valid <= 1'b0;
             cur_mem_resp_write_tag <= 0;
         end else begin
-            cur_mem_resp_write_valid <= cache_mem_bus_if[1].req_valid;
+            cur_mem_resp_write_valid <= cache_mem_bus_if[1].req_valid && mem_req_write_ready;
             cur_mem_resp_write_tag <= cache_mem_bus_if[1].req_data.tag;
         end
     end
