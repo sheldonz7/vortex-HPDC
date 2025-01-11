@@ -134,6 +134,9 @@ module VX_hpdcache
     assign dcache_flush = flush_req_valid != 0;
     
     
+    logic dcache_read_miss, dcache_write_miss, dcache_refill_stall;
+    logic dcache_read_req, dcache_write_req;
+
     // VX_mem_bus_if #(
     //     .DATA_SIZE (WORD_SIZE),
     //     .TAG_WIDTH (TAG_WIDTH)
@@ -189,14 +192,7 @@ module VX_hpdcache
 
     // // Bank requests dispatch
 
-    // wire [NUM_REQS-1:0]                      core_req_valid;
-    // wire [NUM_REQS-1:0][`CS_WORD_ADDR_WIDTH-1:0] core_req_addr;
-    // wire [NUM_REQS-1:0]                      core_req_rw;
-    // wire [NUM_REQS-1:0][WORD_SIZE-1:0]       core_req_byteen;
-    // wire [NUM_REQS-1:0][`CS_WORD_WIDTH-1:0]  core_req_data;
-    // wire [NUM_REQS-1:0][TAG_WIDTH-1:0]       core_req_tag;
-    // wire [NUM_REQS-1:0][`UP(FLAGS_WIDTH)-1:0] core_req_flags;
-    // wire [NUM_REQS-1:0]                      core_req_ready;
+
 
     // wire [NUM_REQS-1:0][LINE_ADDR_WIDTH-1:0] core_req_line_addr;
     // wire [NUM_REQS-1:0][BANK_SEL_WIDTH-1:0]  core_req_bid;
@@ -205,16 +201,7 @@ module VX_hpdcache
     // wire [NUM_REQS-1:0][CORE_REQ_DATAW-1:0]  core_req_data_in;
     // wire [NUM_BANKS-1:0][CORE_REQ_DATAW-1:0] core_req_data_out;
 
-    // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req
-    //     assign core_req_valid[i]  = core_bus2_if[i].req_valid;
-    //     assign core_req_rw[i]     = core_bus2_if[i].req_data.rw;
-    //     assign core_req_byteen[i] = core_bus2_if[i].req_data.byteen;
-    //     assign core_req_addr[i]   = core_bus2_if[i].req_data.addr;
-    //     assign core_req_data[i]   = core_bus2_if[i].req_data.data;
-    //     assign core_req_tag[i]    = core_bus2_if[i].req_data.tag;
-    //     assign core_req_flags[i]  = `UP(FLAGS_WIDTH)'(core_bus2_if[i].req_data.flags);
-    //     assign core_bus2_if[i].req_ready = core_req_ready[i];
-    // end
+
 
     // for (genvar i = 0; i < NUM_REQS; ++i) begin : g_core_req_wsel
     //     if (WORDS_PER_LINE > 1) begin : g_wsel
@@ -285,8 +272,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
 
         // MSHR configuration
         mshrSets: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
-        mshrWays: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),
-        mshrWaysPerRamWord: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),
+        mshrWays: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 4),    // used to be 2
+        mshrWaysPerRamWord: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 4),
         mshrSetsPerRam: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
         mshrRamByteEnable: bit'(1'b1),
         mshrUseRegbank: bit'(MSHR_SIZE < 16),
@@ -583,12 +570,12 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
       .evt_cache_read_miss_o (dcache_read_miss),
       .evt_uncached_req_o    (  /* unused */),
       .evt_cmo_req_o         (  /* unused */),
-      .evt_write_req_o       (  /* unused */),
-      .evt_read_req_o        (  /* unused */),
+      .evt_write_req_o       (dcache_write_req),
+      .evt_read_req_o        (dcache_read_req),
       .evt_prefetch_req_o    (  /* unused */),
       .evt_req_on_hold_o     (  /* unused */),
       .evt_rtab_rollback_o   (  /* unused */),
-      .evt_stall_refill_o    (  /* unused */),
+      .evt_stall_refill_o    (dcache_refill_stall),
       .evt_stall_o           (  /* unused */),
 
       .wbuf_empty_o(wbuffer_empty_o),
@@ -676,74 +663,80 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     //     assign {core_rsp_data_s[i], core_rsp_tag_s[i]} = core_rsp_data_out[i];
     // end
 
-// `ifdef PERF_ENABLE
-//     // per cycle: core_reads, core_writes
-//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_reads_per_cycle;
-//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_writes_per_cycle;
+`ifdef PERF_ENABLE
+    // per cycle: core_reads, core_writes
+    wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_reads_per_cycle;
+    wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_writes_per_cycle;
 
-//     wire [NUM_REQS-1:0] perf_core_reads_per_req;
-//     wire [NUM_REQS-1:0] perf_core_writes_per_req;
+    wire [NUM_REQS-1:0] perf_core_reads_per_req;
+    wire [NUM_REQS-1:0] perf_core_writes_per_req;
 
-//     // per cycle: read misses, write misses, msrq stalls, pipeline stalls
-//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_read_miss_per_cycle;
-//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
-//     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
-//     wire [`CLOG2(NUM_REQS+1)-1:0] perf_crsp_stall_per_cycle;
+    // per cycle: read misses, write misses, msrq stalls, pipeline stalls
+    // wire [`CLOG2(NUM_BANKS+1)-1:0] perf_read_miss_per_cycle;
+    // wire [`CLOG2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
+    // wire [`CLOG2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
+    wire [`CLOG2(NUM_REQS+1)-1:0] perf_crsp_stall_per_cycle;
 
-//     `BUFFER(perf_core_reads_per_req, core_req_valid & core_req_ready & ~core_req_rw);
-//     `BUFFER(perf_core_writes_per_req, core_req_valid & core_req_ready & core_req_rw);
+    `BUFFER(perf_core_reads_per_req, dcache_read_req);
+    `BUFFER(perf_core_writes_per_req, dcache_write_req);
 
-//     `POP_COUNT(perf_core_reads_per_cycle, perf_core_reads_per_req);
-//     `POP_COUNT(perf_core_writes_per_cycle, perf_core_writes_per_req);
-//     `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
-//     `POP_COUNT(perf_write_miss_per_cycle, perf_write_miss_per_bank);
-//     `POP_COUNT(perf_mshr_stall_per_cycle, perf_mshr_stall_per_bank);
+    `POP_COUNT(perf_core_reads_per_cycle, perf_core_reads_per_req);
+    `POP_COUNT(perf_core_writes_per_cycle, perf_core_writes_per_req);
 
-//     wire [NUM_REQS-1:0] perf_crsp_stall_per_req;
-//     for (genvar i = 0; i < NUM_REQS; ++i) begin : g_perf_crsp_stall_per_req
-//         assign perf_crsp_stall_per_req[i] = core_bus2_if[i].rsp_valid && ~core_bus2_if[i].rsp_ready;
-//     end
+    // `POP_COUNT(perf_read_miss_per_cycle, dcache_read_miss);
+    // `POP_COUNT(perf_write_miss_per_cycle, dcache_write_miss);
 
-//     `POP_COUNT(perf_crsp_stall_per_cycle, perf_crsp_stall_per_req);
+    // `POP_COUNT(perf_mshr_stall_per_cycle, dcache_refill_stall);
 
-//     wire perf_mem_stall_per_cycle = mem_bus_if.req_valid && ~mem_bus_if.req_ready;
 
-//     reg [`PERF_CTR_BITS-1:0] perf_core_reads;
-//     reg [`PERF_CTR_BITS-1:0] perf_core_writes;
-//     reg [`PERF_CTR_BITS-1:0] perf_read_misses;
-//     reg [`PERF_CTR_BITS-1:0] perf_write_misses;
-//     reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
-//     reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
-//     reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
 
-//     always @(posedge clk) begin
-//         if (reset) begin
-//             perf_core_reads   <= '0;
-//             perf_core_writes  <= '0;
-//             perf_read_misses  <= '0;
-//             perf_write_misses <= '0;
-//             perf_mshr_stalls  <= '0;
-//             perf_mem_stalls   <= '0;
-//             perf_crsp_stalls  <= '0;
-//         end else begin
-//             perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
-//             perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
-//             perf_read_misses  <= perf_read_misses  + `PERF_CTR_BITS'(perf_read_miss_per_cycle);
-//             perf_write_misses <= perf_write_misses + `PERF_CTR_BITS'(perf_write_miss_per_cycle);
-//             perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(perf_mshr_stall_per_cycle);
-//             perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
-//             perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
-//         end
-//     end
+    wire [NUM_REQS-1:0] perf_crsp_stall_per_req;
+    for (genvar i = 0; i < NUM_REQS; ++i) begin : g_perf_crsp_stall_per_req
+        assign perf_crsp_stall_per_req[i] = core_bus_if[i].rsp_valid && ~core_bus_if[i].rsp_ready;
+    end
 
-//     assign cache_perf.reads        = perf_core_reads;
-//     assign cache_perf.writes       = perf_core_writes;
-//     assign cache_perf.read_misses  = perf_read_misses;
-//     assign cache_perf.write_misses = perf_write_misses;
-//     assign cache_perf.bank_stalls  = perf_collisions;
-//     assign cache_perf.mshr_stalls  = perf_mshr_stalls;
-//     assign cache_perf.mem_stalls   = perf_mem_stalls;
-//     assign cache_perf.crsp_stalls  = perf_crsp_stalls;
-// `endif
+
+
+    `POP_COUNT(perf_crsp_stall_per_cycle, perf_crsp_stall_per_req);
+
+    wire perf_mem_stall_per_cycle = mem_bus_if.req_valid && ~mem_bus_if.req_ready;
+
+    reg [`PERF_CTR_BITS-1:0] perf_core_reads;
+    reg [`PERF_CTR_BITS-1:0] perf_core_writes;
+    reg [`PERF_CTR_BITS-1:0] perf_read_misses;
+    reg [`PERF_CTR_BITS-1:0] perf_write_misses;
+    reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
+    reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
+    reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
+
+    always @(posedge clk) begin
+        if (!reset) begin
+            perf_core_reads   <= '0;
+            perf_core_writes  <= '0;
+            perf_read_misses  <= '0;
+            perf_write_misses <= '0;
+            perf_mshr_stalls  <= '0;
+            perf_mem_stalls   <= '0;
+            perf_crsp_stalls  <= '0;
+        end else begin
+            perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
+            perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
+            perf_read_misses  <= perf_read_misses  + `PERF_CTR_BITS'(dcache_read_miss);
+            perf_write_misses <= perf_write_misses + `PERF_CTR_BITS'(dcache_write_miss);
+            perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(dcache_refill_stall);
+            perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
+            perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
+        end
+    end
+
+    assign cache_perf.reads        = perf_core_reads;
+    assign cache_perf.writes       = perf_core_writes;
+    assign cache_perf.read_misses  = perf_read_misses;
+    assign cache_perf.write_misses = perf_write_misses;
+    assign cache_perf.bank_stalls  = perf_collisions;
+    assign cache_perf.mshr_stalls  = perf_mshr_stalls;
+    assign cache_perf.mem_stalls   = perf_mem_stalls;
+    assign cache_perf.crsp_stalls  = perf_crsp_stalls;
+`endif
 
 endmodule
