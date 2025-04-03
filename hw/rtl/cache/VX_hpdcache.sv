@@ -137,6 +137,10 @@ module VX_hpdcache
     logic dcache_read_miss, dcache_write_miss, dcache_refill_stall;
     logic dcache_read_req, dcache_write_req;
 
+
+    
+
+
     // VX_mem_bus_if #(
     //     .DATA_SIZE (WORD_SIZE),
     //     .TAG_WIDTH (TAG_WIDTH)
@@ -235,9 +239,6 @@ module VX_hpdcache
     //     };
     // end
 
-`ifdef PERF_ENABLE
-    wire [`PERF_CTR_BITS-1:0] perf_collisions;
-`endif
 
 
 localparam int HPDCACHE_NREQUESTERS = 1;   //
@@ -709,6 +710,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
 
+    reg [`PERF_CTR_BITS-1:0] perf_bank_stalls; // bank contention/collision
+
     always @(posedge clk) begin
         if (!reset) begin
             perf_core_reads   <= '0;
@@ -718,6 +721,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
             perf_mshr_stalls  <= '0;
             perf_mem_stalls   <= '0;
             perf_crsp_stalls  <= '0;
+            perf_bank_stalls  <= '0;
         end else begin
             perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
             perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
@@ -733,7 +737,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     assign cache_perf.writes       = perf_core_writes;
     assign cache_perf.read_misses  = perf_read_misses;
     assign cache_perf.write_misses = perf_write_misses;
-    assign cache_perf.bank_stalls  = perf_collisions;
+    assign cache_perf.bank_stalls  = perf_bank_stalls;
     assign cache_perf.mshr_stalls  = perf_mshr_stalls;
     assign cache_perf.mem_stalls   = perf_mem_stalls;
     assign cache_perf.crsp_stalls  = perf_crsp_stalls;
