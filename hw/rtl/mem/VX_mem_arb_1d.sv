@@ -48,7 +48,7 @@ module VX_mem_arb_1d #(
     wire [NUM_OUTPUTS-1:0][`UP(LOG_NUM_REQS)-1:0] req_sel_out;
     wire [NUM_OUTPUTS-1:0]                req_ready_out;
 
-    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : g_req_data_in
+    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : gen_req_data_in
         assign req_valid_in[i] = bus_in_if[i].req_valid;
         assign req_data_in[i] = {
             bus_in_if[i].req_data.rw,
@@ -79,7 +79,7 @@ module VX_mem_arb_1d #(
         .ready_out (req_ready_out)
     );
 
-    for (genvar i = 0; i < NUM_OUTPUTS; ++i) begin : g_bus_out_if
+    for (genvar i = 0; i < NUM_OUTPUTS; ++i) begin : gen_bus_out_if
         // wire [TAG_WIDTH-1:0] req_tag_out;
         // VX_bits_insert #(
         //     .N   (TAG_WIDTH),
@@ -184,18 +184,18 @@ module VX_mem_arb_1d #(
         //     .ready_out (rsp_ready_out),
         //     `UNUSED_PIN (sel_out)
         // );
-    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : g_rsp_data_out
-        if (i == RSP_SEL) begin
+    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : gen_rsp_data_out
+        if (i == RSP_SEL) begin : g_rsp_sel
             assign rsp_valid_out[i] = rsp_valid_in[0];
             assign rsp_data_out[i] = rsp_data_in[0];
             assign rsp_ready_in[0] = rsp_ready_out[i];
-        end else begin
+        end else begin : g_no_rsp_sel
             assign rsp_valid_out[i] = 1'b0;
             assign rsp_data_out[i] = 1'b0;
         end
     end    
 
-    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : g_output
+    for (genvar i = 0; i < NUM_INPUTS; ++i) begin : gen_output
         assign bus_in_if[i].rsp_valid = rsp_valid_out[i];
         assign {
             bus_in_if[i].rsp_data.tag,
