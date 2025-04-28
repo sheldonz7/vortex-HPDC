@@ -247,7 +247,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     localparam hpdcache_pkg::hpdcache_user_cfg_t HPDcacheUserCfg = '{
         // HPDCache configuration for Vortex GPU
         // Core parameters
-        nRequesters: HPDCACHE_NREQUESTERS,  // should be set as NUMBER of INPUT of Vortex_cache_cluster, set to 1 for test
+        nRequesters: NUM_REQS,  // should be set as NUMBER of INPUT of Vortex_cache_cluster, set to 1 for test
         paWidth: int'(`MEM_ADDR_WIDTH),  // From Vortex MEM_ADDR_WIDTH, 
         wordWidth: int'(`CS_WORD_WIDTH),  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
         sets: int'(`CS_LINES_PER_BANK),  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
@@ -272,10 +272,15 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         //accessWords: int'(4)
 
         // MSHR configuration
-        mshrSets: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
-        mshrWays: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 4),    // used to be 2
-        mshrWaysPerRamWord: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 4),
-        mshrSetsPerRam: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
+        // mshrSets: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
+        // mshrWays: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),    // used to be 2
+        // mshrWaysPerRamWord: int'((MSHR_SIZE < 16) ? MSHR_SIZE : 2),
+        // mshrSetsPerRam: int'((MSHR_SIZE < 16) ? 1 : MSHR_SIZE / 2),
+       
+        mshrSets: int'(1),
+        mshrWays: int'(MSHR_SIZE),
+        mshrWaysPerRamWord: int'(MSHR_SIZE),
+        mshrSetsPerRam: int'(1),
         mshrRamByteEnable: bit'(1'b1),
         mshrUseRegbank: bit'(MSHR_SIZE < 16),
 
