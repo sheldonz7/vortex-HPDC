@@ -128,8 +128,10 @@ module VX_hpdcache
 
     // if there is flush request
     logic [NUM_REQS-1:0] flush_req_valid;
-    wire dcache_flush = (| flush_req_valid); // one or more of the requesters issue a flush request
+    logic dcache_flush;
 
+    // one or more of the requesters issue a flush request
+    assign dcache_flush = flush_req_valid != 0;
     
     
     logic dcache_read_miss, dcache_write_miss, dcache_refill_stall;
@@ -316,7 +318,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
   initial begin
     $display("HPDcache Configuration:");
     $display("  nRequesters: %0d", HPDcacheUserCfg.nRequesters);
-   // $display("  nBanks: %0d", HPDcacheUserCfg.nBanks);
+    $display("  nBanks: %0d", HPDcacheUserCfg.nBanks);
     $display("  paWidth: %0d", HPDcacheUserCfg.paWidth);
     $display("  wordWidth: %0d", HPDcacheUserCfg.wordWidth);
     $display("  sets: %0d", HPDcacheUserCfg.sets);
@@ -393,14 +395,14 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     // hardware prefetcher
     typedef logic [63:0] hwpf_stride_param_t;
 
-    logic                        dcache_req_valid[NUM_REQS];
-    logic                        dcache_req_ready[NUM_REQS];
-    hpdcache_req_t               dcache_req      [NUM_REQS];
-    logic                        dcache_req_abort[NUM_REQS];
-    hpdcache_tag_t               dcache_req_tag  [NUM_REQS];
-    hpdcache_pkg::hpdcache_pma_t dcache_req_pma  [NUM_REQS];
-    logic                        dcache_rsp_valid[NUM_REQS];
-    hpdcache_rsp_t               dcache_rsp      [NUM_REQS];
+    logic                        dcache_req_valid[HPDCACHE_NREQUESTERS];
+    logic                        dcache_req_ready[HPDCACHE_NREQUESTERS];
+    hpdcache_req_t               dcache_req      [HPDCACHE_NREQUESTERS];
+    logic                        dcache_req_abort[HPDCACHE_NREQUESTERS];
+    hpdcache_tag_t               dcache_req_tag  [HPDCACHE_NREQUESTERS];
+    hpdcache_pkg::hpdcache_pma_t dcache_req_pma  [HPDCACHE_NREQUESTERS];
+    logic                        dcache_rsp_valid[HPDCACHE_NREQUESTERS];
+    hpdcache_rsp_t               dcache_rsp      [HPDCACHE_NREQUESTERS];
     logic                        evt_hpdc_read_miss, evt_hpdc_write_miss;
 
 
