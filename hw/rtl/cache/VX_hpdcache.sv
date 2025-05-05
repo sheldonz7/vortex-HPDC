@@ -246,6 +246,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         // HPDCache configuration for Vortex GPU
         // Core parameters
         nRequesters: NUM_REQS,  // should be set as NUMBER of INPUT of Vortex_cache_cluster, set to 1 for test
+        nBanks: NUM_BANKS,  // From Vortex NUM_BANKS
         paWidth: int'(`MEM_ADDR_WIDTH),  // From Vortex MEM_ADDR_WIDTH, 
         wordWidth: int'(`CS_WORD_WIDTH),  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
         sets: int'(`CS_LINES_PER_BANK),  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
@@ -316,7 +317,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
   initial begin
     $display("HPDcache Configuration:");
     $display("  nRequesters: %0d", HPDcacheUserCfg.nRequesters);
-   // $display("  nBanks: %0d", HPDcacheUserCfg.nBanks);
+    $display("  nBanks: %0d", HPDcacheUserCfg.nBanks);
     $display("  paWidth: %0d", HPDcacheUserCfg.paWidth);
     $display("  wordWidth: %0d", HPDcacheUserCfg.wordWidth);
     $display("  sets: %0d", HPDcacheUserCfg.sets);
