@@ -68,6 +68,8 @@ parse_args() {
             --hpdcache)  CONFIGS=$(add_option "$CONFIGS" "-DENABLE_HPDCACHE") ;;
             --l2cache)  CONFIGS=$(add_option "$CONFIGS" "-DL2_ENABLE") ;;
             --l3cache)  CONFIGS=$(add_option "$CONFIGS" "-DL3_ENABLE") ;;
+            --l2hpdc)   CONFIGS=$(add_option "$CONFIGS" "-DL2_HPDC_ENABLE") ;;
+            --l3hpdc)  CONFIGS=$(add_option "$CONFIGS" "-DL3_HPDC_ENABLE") ;;
             --perf=*)   CONFIGS=$(add_option "$CONFIGS" "-DPERF_ENABLE"); PERF_CLASS=${i#*=} ;;
             --debug=*)  DEBUG=1; DEBUG_LEVEL=${i#*=} ;;
             --scope)    SCOPE=1; ;;

@@ -141,11 +141,25 @@
     `define L2_ENABLED   0
 `endif
 
+`ifdef L2_HPDC_ENABLE
+    `define L2_HPDC_ENABLED   1
+`else
+    `define L2_HPDC_ENABLED   0
+`endif
+
+
 `ifdef L3_ENABLE
     `define L3_ENABLED   1
 `else
     `define L3_ENABLED   0
 `endif
+
+`ifdef L3_HPDC_ENABLE
+    `define L3_HPDC_ENABLED   1
+`else
+    `define L3_HPDC_ENABLED   0
+`endif
+
 
 `ifdef L1_DISABLE
     `define ICACHE_DISABLE
