@@ -34,6 +34,8 @@ module VX_hpdcache
     // Size of a word in bytes
     parameter WORD_SIZE             = 16,
 
+    parameter NrHwPrefetchers       = 4,
+
     // Core Response Queue Size
     parameter CRSQ_SIZE             = 4,
     // Miss Reserv Queue Knob
@@ -388,29 +390,49 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
 
     typedef logic [HPDcacheCfg.u.wbufTimecntWidth-1:0] hpdcache_wbuf_timecnt_t;
 
-    // if adapter for load/store core request/response
 
 
+
+`ifdef HWPF_ENABLE
     // hardware prefetcher
     typedef logic [63:0] hwpf_stride_param_t;
 
-    logic                        dcache_req_valid[NUM_REQS];
-    logic                        dcache_req_ready[NUM_REQS];
-    hpdcache_req_t               dcache_req      [NUM_REQS];
-    logic                        dcache_req_abort[NUM_REQS];
-    hpdcache_tag_t               dcache_req_tag  [NUM_REQS];
-    hpdcache_pkg::hpdcache_pma_t dcache_req_pma  [NUM_REQS];
-    logic                        dcache_rsp_valid[NUM_REQS];
-    hpdcache_rsp_t               dcache_rsp      [NUM_REQS];
+
+    logic                                   [                2:0] snoop_valid;
+    logic                                   [                2:0] snoop_abort;
+    hpdcache_req_offset_t                   [                2:0] snoop_addr_offset;
+    hpdcache_tag_t                          [                2:0] snoop_addr_tag;
+    logic                                   [                2:0] snoop_phys_indexed;
+
+    logic                                                         dcache_cmo_req_is_prefetch;
+
+    hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_in;
+    hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_out;
+
+
+
+    localparam int HPDC_NREQ = NUM_REQS + 1; // one extra requester for hwpf
+`else
+    localparam int HPDC_NREQ = NUM_REQS;
+`endif
+
+
+    logic                        dcache_req_valid[HPDC_NREQ];
+    logic                        dcache_req_ready[HPDC_NREQ];
+    hpdcache_req_t               dcache_req      [HPDC_NREQ];
+    logic                        dcache_req_abort[HPDC_NREQ];
+    hpdcache_tag_t               dcache_req_tag  [HPDC_NREQ];
+    hpdcache_pkg::hpdcache_pma_t dcache_req_pma  [HPDC_NREQ];
+    logic                        dcache_rsp_valid[HPDC_NREQ];
+    hpdcache_rsp_t               dcache_rsp      [HPDC_NREQ];
     logic                        evt_hpdc_read_miss, evt_hpdc_write_miss;
 
 
-    logic dcache_enable;
-
-    // turn on by default
-    assign dcache_enable = 1'b1;
+    logic dcache_enable = 1'b1;
 
 
+
+    // if adapter for load/store core request/response
     generate
         for (genvar r = 0; r < NUM_REQS; ++r) begin : gen_vx_hpdcache_if_adapter
             VX_hpdcache_core_if_adapter #(
@@ -436,7 +458,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
             .hpdcache_req_sid_i(hpdcache_req_sid_t'(r)),
 
             .flush_op_o        (flush_req_valid[r]),
-            .vx_core_bus     (core_bus_if [r]),
+            .vx_core_bus       (core_bus_if [r]),
                                 
             .hpdcache_req_valid(dcache_req_valid[r]),
             .hpdcache_req_ready(dcache_req_ready[r]),
@@ -480,40 +502,64 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     logic                 dcache_write_resp_valid;
     hpdcache_mem_resp_w_t dcache_write_resp;
 
-    // vx_hpdcache_mem_if_adapter #(
-    //     .hpdcache_mem_id_t    (hpdcache_mem_id_t),
-    //     .hpdcache_mem_req_t   (hpdcache_mem_req_t),
-    //     .hpdcache_mem_req_w_t (hpdcache_mem_req_w_t),
-    //     .hpdcache_mem_resp_r_t(hpdcache_mem_resp_r_t),
-    //     .hpdcache_mem_resp_w_t(hpdcache_mem_resp_w_t),
-    // ) i_vx_hpdcache_mem_if_adapter (
-    //     .clk_i,
-    //     .rst_ni,
+  //  Hardware memory prefetcher configuration
+    input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
+    input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
+    input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
+    output logic [               63:0]       hwpf_status_o,
 
-    //     // memory request signals
-    //     .mem_bus_if    (mem_bus_if),
+  hwpf_stride_wrapper #(
+      .HPDcacheCfg          (HPDcacheCfg),
+      .NUM_HW_PREFETCH      (NrHwPrefetchers),
+      .NUM_SNOOP_PORTS      (3),
+      .hpdcache_tag_t       (hpdcache_tag_t),
+      .hpdcache_req_offset_t(hpdcache_req_offset_t),
+      .hpdcache_req_data_t  (hpdcache_req_data_t),
+      .hpdcache_req_be_t    (hpdcache_req_be_t),
+      .hpdcache_req_sid_t   (hpdcache_req_sid_t),
+      .hpdcache_req_tid_t   (hpdcache_req_tid_t),
+      .hpdcache_req_t       (hpdcache_req_t),
+      .hpdcache_rsp_t       (hpdcache_rsp_t)
+  ) i_hwpf_stride_wrapper (
+      .clk_i,
+      .rst_ni,
 
-    //     .mem_req_read_ready(dcache_read_ready),
-    //     .mem_req_read_valid(dcache_read_valid),
-    //     .mem_req_read      (dcache_read),
+      .hwpf_stride_base_set_i    (hwpf_base_set_i),
+      .hwpf_stride_base_i        (hwpf_base_i),
+      .hwpf_stride_base_o        (hwpf_base_o),
+      .hwpf_stride_param_set_i   (hwpf_param_set_i),
+      .hwpf_stride_param_i       (hwpf_param_i),
+      .hwpf_stride_param_o       (hwpf_param_o),
+      .hwpf_stride_throttle_set_i(hwpf_throttle_set_i),
+      .hwpf_stride_throttle_i    (hwpf_throttle_in),
+      .hwpf_stride_throttle_o    (hwpf_throttle_out),
+      .hwpf_stride_status_o      (hwpf_status_o),
 
-    //     .mem_resp_read_ready(dcache_read_resp_ready),
-    //     .mem_resp_read_valid(dcache_read_resp_valid),
-    //     .mem_resp_read      (dcache_read_resp),
+      .snoop_valid_i       (snoop_valid),
+      .snoop_abort_i       (snoop_abort),
+      .snoop_addr_offset_i (snoop_addr_offset),
+      .snoop_addr_tag_i    (snoop_addr_tag),
+      .snoop_phys_indexed_i(snoop_phys_indexed),
 
-    //     .mem_req_write_ready(dcache_write_ready),
-    //     .mem_req_write_valid(dcache_write_valid),
-    //     .mem_req_write      (dcache_write),
+      .hpdcache_req_sid_i(hpdcache_req_sid_t'(NUM_REQS)),
 
-    //     .mem_req_write_data_ready(dcache_write_data_ready),
-    //     .mem_req_write_data_valid(dcache_write_data_valid),
-    //     .mem_req_write_data      (dcache_write_data),
+      .hpdcache_req_valid_o(dcache_req_valid[NUM_REQS]),
+      .hpdcache_req_ready_i(dcache_req_ready[NUM_REQS]),
+      .hpdcache_req_o      (dcache_req[NUM_REQS]),
+      .hpdcache_req_abort_o(dcache_req_abort[NUM_REQS]),
+      .hpdcache_req_tag_o  (dcache_req_tag[NUM_REQS]),
+      .hpdcache_req_pma_o  (dcache_req_pma[NUM_REQS]),
+      .hpdcache_rsp_valid_i(dcache_rsp_valid[NUM_REQS]),
+      .hpdcache_rsp_i      (dcache_rsp[NUM_REQS])
+  );
 
-    //     .mem_resp_write_ready(dcache_write_resp_ready),
-    //     .mem_resp_write_valid(dcache_write_resp_valid),
-    //     .mem_resp_write      (dcache_write_resp),
 
-    // );
 
     hpdcache #(
       .HPDcacheCfg          (HPDcacheCfg),
