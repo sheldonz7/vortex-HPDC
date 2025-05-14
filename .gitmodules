@@ -4,9 +4,11 @@
 [submodule "third_party/ramulator"]
 	path = third_party/ramulator
 	url = https://github.com/CMU-SAFARI/ramulator2.git
+	branch = main
 [submodule "third_party/cvfpu"]
 	path = third_party/cvfpu
 	url = https://github.com/openhwgroup/cvfpu.git
 [submodule "hw/rtl/cache/cv-hpdcache"]
 	path = hw/rtl/cache/cv-hpdcache
-	url = https://github.com/openhwgroup/cv-hpdcache.git
+	url = https://github.com/sheldonz7/cv-hpdcache.git
+	branch = merge-branch
