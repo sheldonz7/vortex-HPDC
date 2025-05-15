@@ -284,7 +284,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         mshrUseRegbank: bit'(MSHR_SIZE < 16),
 
         // Core response handling
-        refillCoreRspFeedthrough: bit'(1'b1),
+        coreRspFeedthrough: bit'(1'b1),
         refillFifoDepth: int'(2),
 
         // Write buffer configuration
@@ -337,7 +337,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     $display("  mshrSetsPerRam: %0d", HPDcacheUserCfg.mshrSetsPerRam);
     $display("  mshrRamByteEnable: %0d", HPDcacheUserCfg.mshrRamByteEnable);
     $display("  mshrUseRegbank: %0d", HPDcacheUserCfg.mshrUseRegbank);
-    $display("  refillCoreRspFeedthrough: %0d", HPDcacheUserCfg.refillCoreRspFeedthrough);
+    $display("  coreRspFeedthrough: %0d", HPDcacheUserCfg.coreRspFeedthrough);
     $display("  refillFifoDepth: %0d", HPDcacheUserCfg.refillFifoDepth);
     $display("  wbufDirEntries: %0d", HPDcacheUserCfg.wbufDirEntries);
     $display("  wbufDataEntries: %0d", HPDcacheUserCfg.wbufDataEntries);
