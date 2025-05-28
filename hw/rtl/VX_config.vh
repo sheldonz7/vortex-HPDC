@@ -147,6 +147,12 @@
     `define L2_HPDC_ENABLED   0
 `endif
 
+`ifdef L2_HWPF_ENABLE
+    `define L2_HWPF_ENABLED   1
+`else
+    `define L2_HWPF_ENABLED   0
+`endif
+
 
 `ifdef L3_ENABLE
     `define L3_ENABLED   1
@@ -160,6 +166,11 @@
     `define L3_HPDC_ENABLED   0
 `endif
 
+`ifdef L3_HWPF_ENABLE
+    `define L3_HWPF_ENABLED   1
+`else
+    `define L3_HWPF_ENABLED   0
+`endif
 
 `ifdef L1_DISABLE
     `define ICACHE_DISABLE
