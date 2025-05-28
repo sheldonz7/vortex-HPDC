@@ -117,6 +117,15 @@ module VX_hpdcache
 
     localparam REQ_XBAR_BUF = (NUM_REQS > 4) ? 2 : 0;
 
+    // HPDC parameters
+    // for HPC workload, set word width to 64 bits
+    localparam HPDC_WORD_SIZE = 8;
+    localparam HPDC_WORD_WIDTH = 64;
+    localparam HPDC_CL_WORD = LINE_SIZE / HPDC_WORD_SIZE;
+    localparam HPDC_REQ_WORD = WORD_WIDTH / HPDC_WORD_WIDTH;
+    localparam HPDC_ACCESS_WORD = HPDC_CL_WORD;
+
+
 
 // performance monitoring and tracking
 `ifdef PERF_ENABLE
@@ -241,6 +250,14 @@ module VX_hpdcache
 
 
 
+// generate
+//     $error("line size: %0d", LINE_SIZE);
+//     $error("word size: %0d", WORD_SIZE);
+
+
+// endgenerate
+
+
 localparam int HPDCACHE_NREQUESTERS = 1;   //
 
 // hpcache
@@ -250,11 +267,11 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         nRequesters: NUM_REQS,  // should be set as NUMBER of INPUT of Vortex_cache_cluster, set to 1 for test
         nBanks: NUM_BANKS,  // From Vortex NUM_BANKS
         paWidth: int'(`MEM_ADDR_WIDTH),  // From Vortex MEM_ADDR_WIDTH, 
-        wordWidth: int'(`CS_WORD_WIDTH),  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
+        wordWidth: int'(HPDC_WORD_WIDTH),  // From Vortex CS_WORD_WIDTH (8 * WORD_SIZE)
         sets: int'(`CS_LINES_PER_BANK),  // CACHE_SIZE / (LINE_SIZE * NUM_WAYS) for NUMBANK = 1
         ways: int'(NUM_WAYS),  // From Vortex NUM_WAYS
-        clWords: int'(`CS_WORDS_PER_LINE),  // From Vortex CS_WORDS_PER_LINE (LINE_SIZE/WORD_SIZE)
-        reqWords: int'(1),  // Single word requests
+        clWords: int'(HPDC_CL_WORD),  // From Vortex CS_WORDS_PER_LINE (LINE_SIZE/WORD_SIZE)
+        reqWords: int'(HPDC_REQ_WORD),  // Single word requests
 
         // Request tracking
         reqTransIdWidth: int'(TAG_WIDTH),  // core request tag width
@@ -269,7 +286,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         dataWaysPerRamWord: int'(2),
         dataSetsPerRam: int'(`CS_LINES_PER_BANK),
         dataRamByteEnable: bit'(1'b1),
-        accessWords: int'(__maxu(`CS_WORDS_PER_LINE / 2, 1)),
+        accessWords: int'(__maxu(HPDC_CL_WORD / 2, HPDC_REQ_WORD)),
         //accessWords: int'(4)
 
         // MSHR configuration
@@ -292,7 +309,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         // Write buffer configuration
         wbufDirEntries: int'(MREQ_SIZE),  // From Vortex MREQ_SIZE
         wbufDataEntries: int'(MREQ_SIZE), 
-        wbufWords: int'(1),
+        wbufWords: int'(`CS_LINE_WIDTH / WORD_WIDTH),   // mem bus width / core request word width, e.g., 512/256 = 2
         wbufTimecntWidth: int'(3),
 
         // Request tracking
@@ -362,13 +379,26 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
       HPDcacheUserCfg
     );
 
-    `STATIC_ASSERT(HPDcacheCfg.u.wordWidth < 0, ("wordwidth: %0d", HPDcacheCfg.u.wordWidth))
-    `STATIC_ASSERT(HPDcacheUserCfg.wordWidth < 0, ("user: wordwidth: %0d", HPDcacheUserCfg.wordWidth))
-    `STATIC_ASSERT(HPDcacheUserCfg.accessWords < 0, ("user: accesswords: %0d", HPDcacheUserCfg.accessWords))
-    `STATIC_ASSERT(HPDcacheUserCfg.paWidth < 0, ("pawidth: %0d", HPDcacheCfg.u.paWidth))
-    `STATIC_ASSERT(HPDcacheUserCfg.memAddrWidth < 0, ("memAddrwidth: %0d", HPDcacheCfg.u.memAddrWidth))
-    `STATIC_ASSERT(NUM_BANKS < 0, ("numbanks: %0d", NUM_BANKS))
-    `STATIC_ASSERT(HPDcacheUserCfg.clWords < 0, ("clwords: %0d", HPDcacheUserCfg.clWords))
+
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("instance id: %s", INSTANCE_ID));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("write-back: %0d", WRITEBACK));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("line size: %0d", LINE_SIZE));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("word size: %0d", WORD_SIZE));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("word width: %0d", HPDcacheCfg.u.wordWidth));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("clword: %0d", HPDcacheCfg.u.clWords));
+    // `STATIC_ASSERT(HPDcacheCfg.clWordIdxWidth > 0, ("clWordIdxWidth: %0d", HPDcacheCfg.clWordIdxWidth));
+
+
+
+    // `STATIC_ASSERT(HPDcacheCfg.u.wordWidth < 0, ("wordwidth: %0d", HPDcacheCfg.u.wordWidth))
+    // `STATIC_ASSERT(LINE_SIZE < 0, ("linesize: %0d", LINE_SIZE))
+    // `STATIC_ASSERT(write < 0, ("sets: %0d", HPDcacheCfg.u.sets))
+    // `STATIC_ASSERT(HPDcacheUserCfg.wordWidth < 0, ("user: wordwidth: %0d", HPDcacheUserCfg.wordWidth))
+    // `STATIC_ASSERT(HPDcacheUserCfg.accessWords < 0, ("user: accesswords: %0d", HPDcacheUserCfg.accessWords))
+    // `STATIC_ASSERT(HPDcacheUserCfg.paWidth < 0, ("pawidth: %0d", HPDcacheCfg.u.paWidth))
+    // `STATIC_ASSERT(HPDcacheUserCfg.memAddrWidth < 0, ("memAddrwidth: %0d", HPDcacheCfg.u.memAddrWidth))
+    // `STATIC_ASSERT(NUM_BANKS < 0, ("numbanks: %0d", NUM_BANKS))
+    // `STATIC_ASSERT(HPDcacheUserCfg.clWords < 0, ("clwords: %0d", HPDcacheUserCfg.clWords))
 
     // generate type definitions
 

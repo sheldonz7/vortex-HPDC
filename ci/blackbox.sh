@@ -70,6 +70,8 @@ parse_args() {
             --l3cache)  CONFIGS=$(add_option "$CONFIGS" "-DL3_ENABLE") ;;
             --l2hpdc)   CONFIGS=$(add_option "$CONFIGS" "-DL2_HPDC_ENABLE") ;;
             --l3hpdc)  CONFIGS=$(add_option "$CONFIGS" "-DL3_HPDC_ENABLE") ;;
+            --l2hwpf)  CONFIGS=$(add_option "$CONFIGS" "-DL2_HWPF_ENABLE") ;;   # enable hardware prefetcher for L2 cache
+            --l3hwpf)  CONFIGS=$(add_option "$CONFIGS" "-DL3_HWPF_ENABLE") ;;   # enable hardware prefetcher for L3 cache
             --perf=*)   CONFIGS=$(add_option "$CONFIGS" "-DPERF_ENABLE"); PERF_CLASS=${i#*=} ;;
             --debug=*)  DEBUG=1; DEBUG_LEVEL=${i#*=} ;;
             --scope)    SCOPE=1; ;;
