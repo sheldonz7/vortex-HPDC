@@ -10,9 +10,25 @@ hpdcache()
     echo "begin hpdcache integration test..."
     
     # basic L1 test
+    ./ci/blackbox.sh --driver=rtlsim --app=demo --debug=1 --rebuild=1 --perf=2
     ./ci/blackbox.sh --driver=rtlsim --app=demo --debug=1 --rebuild=1 --hpdcache --perf=2
+    
+    
+    ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --debug=1 --rebuild=1 --perf=2
     ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --debug=1 --rebuild=1 --hpdcache --perf=2
+    
+    
+    ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x --debug=1 --rebuild=1 --perf=2
     ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x --debug=1 --rebuild=1 --hpdcache --perf=2
+
+
+    ./ci/blackbox.sh --driver=rtlsim --app=conv3x --debug=1 --rebuild=1 --perf=2
+    ./ci/blackbox.sh --driver=rtlsim --app=conv3x --debug=1 --rebuild=1 --hpdcache --perf=2
+
+    # L1, 4 core, 1 cluster, with cache clustering
+    CONFIGS="-DSOCKET_SIZE=4 -DNUM_DCACHES=4 -DNUM_ICACHES=2" ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --cores=4 --warps=1 --threads=2
+    CONFIGS="-DSOCKET_SIZE=4 -DNUM_DCACHES=4 -DNUM_ICACHES=2" ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x --cores=4 --warps=1 --threads=2
+    CONFIGS="-DSOCKET_SIZE=4 -DNUM_DCACHES=4 -DNUM_ICACHES=2" ./ci/blackbox.sh --driver=rtlsim --app=conv3x --cores=4 --warps=1 --threads=2
 
 
     # L2 bench, with both L1 and L2 replaced by HPDC
