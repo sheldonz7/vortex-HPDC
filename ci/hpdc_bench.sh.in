@@ -14,15 +14,24 @@ hpdcache()
     ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --debug=1 --rebuild=1 --hpdcache --perf=2
     ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x --debug=1 --rebuild=1 --hpdcache --perf=2
 
-    # basic L2 test
-    ./ci/blackbox.sh --driver=rtlsim --app=demo --debug=1 --rebuild=1 --hpdcache --perf=2 --l2cache
 
     # L2 bench, with both L1 and L2 replaced by HPDC
-    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --cores=4 --l2cache --app=diverge --args="-n1" --debug=1 --rebuild=1 --perf=2
-    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --cores=4 --l2cache --app=diverge --args="-n1" --debug=1 --rebuild=1 --perf=2 --hpdcache --l2hpdc
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=4 --l2cache --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=4 --hpdcache --l2cache --l2hpdc --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=conv3x --cores=4 --l2cache --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=conv3x --cores=4 --hpdcache --l2cache --l2hpdc --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x --cores=4 --l2cache --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=sgemm2x--cores=4 --hpdcache --l2cache --l2hpdc --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --cores=4 --l2cache --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=sgemmx --cores=4 --hpdcache --l2cache --l2hpdc --debug=1 --rebuild=1 --perf=2
     
-    #
-    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --cores=2 --clusters=2 --l2cache --l3cache --app=diverge --args="-n1" --debug=1 --rebuild=1 --perf=2
-    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --cores=2 --clusters=2 --l2cache --l3cache --app=diverge --args="-n1" --debug=1 --rebuild=1 --perf=2 --hpdcache --l2hpdc
+    
+    # L3 
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --l2cache --l3cache --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --hpdcache --l2cache --l2hpdc --l3cache --l3hpdc --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --l2cache --l3cache --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --hpdcache --l2cache --l2hpdc --l3cache --l3hpdc --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --l2cache --l3cache --args="-n1" --debug=1 --rebuild=1 --perf=2
+    CONFIGS="-DSOCKET_SIZE=1" ./ci/blackbox.sh --driver=rtlsim --app=diverge --cores=2 --clusters=2 --hpdcache --l2cache --l2hpdc --l3cache --l3hpdc --args="-n1" --debug=1 --rebuild=1 --perf=2
 
 }
