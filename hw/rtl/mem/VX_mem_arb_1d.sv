@@ -190,8 +190,8 @@ module VX_mem_arb_1d #(
             assign rsp_data_out[i] = rsp_data_in[0];
             assign rsp_ready_in[0] = rsp_ready_out[i];
         end else begin : g_no_rsp_sel
-            assign rsp_valid_out[i] = 1'b0;
-            assign rsp_data_out[i] = 1'b0;
+            assign rsp_valid_out[i] = 'b0;
+            assign rsp_data_out[i] = 'b0;
         end
     end    
 

@@ -631,8 +631,8 @@
 
 // Number of Banks
 `ifndef DCACHE_NUM_BANKS
-`define DCACHE_NUM_BANKS `MIN(`NUM_LSU_LANES, 4)
-//`define DCACHE_NUM_BANKS 1
+//`define DCACHE_NUM_BANKS `MIN(`NUM_LSU_LANES, 4)
+`define DCACHE_NUM_BANKS 1
 `endif
 
 // Core Response Queue Size
@@ -702,7 +702,8 @@
 
 // Number of Banks
 `ifndef L2_NUM_BANKS
-`define L2_NUM_BANKS `MIN(4, `NUM_SOCKETS)
+//`define L2_NUM_BANKS `MIN(4, `NUM_SOCKETS)
+`define L2_NUM_BANKS 1
 `endif
 
 // Core Response Queue Size
@@ -754,7 +755,8 @@
 
 // Number of Banks
 `ifndef L3_NUM_BANKS
-`define L3_NUM_BANKS `MIN(8, `NUM_CLUSTERS)
+//`define L3_NUM_BANKS `MIN(8, `NUM_CLUSTERS)
+`define L3_NUM_BANKS 1
 `endif
 
 // Core Response Queue Size

@@ -89,8 +89,8 @@ module VX_hpdcache_mem_if_adapter import VX_gpu_pkg::*; #(
     // logic buffered_req_write_data_valid;
     // hpdcache_mem_req_w_t buffered_req_write_data;
 
-    assign vx_mem_read_req_addr = mem_req_read.mem_req_addr[`MEM_ADDR_WIDTH:`CLOG2(MEM_DATA_SIZE)];
-    assign vx_mem_write_req_addr = mem_req_write.mem_req_addr[`MEM_ADDR_WIDTH:`CLOG2(MEM_DATA_SIZE)];
+    assign vx_mem_read_req_addr = mem_req_read.mem_req_addr[`MEM_ADDR_WIDTH-1:`CLOG2(MEM_DATA_SIZE)];
+    assign vx_mem_write_req_addr = mem_req_write.mem_req_addr[`MEM_ADDR_WIDTH-1:`CLOG2(MEM_DATA_SIZE)];
 
     // FSM register
     // always_ff @(posedge clk or negedge reset) begin
