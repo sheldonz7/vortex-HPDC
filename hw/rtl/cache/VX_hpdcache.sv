@@ -81,7 +81,31 @@ module VX_hpdcache
     input wire reset,
 
     VX_mem_bus_if.slave     core_bus_if [NUM_REQS],
-    VX_mem_bus_if.master    mem_bus_if
+    VX_mem_bus_if.master    mem_bus_if,
+
+`ifdef HWPF_ENABLE
+    //  Hardware memory prefetcher configuration
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
+    // TO_BE_COMPLETED - TO_BE_COMPLETED
+    output logic [               63:0]       hwpf_status_o
+`endif
 );
 
     `STATIC_ASSERT(NUM_BANKS == (1 << `CLOG2(NUM_BANKS)), ("invalid parameter: number of banks must be power of 2"))
@@ -532,17 +556,17 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     logic                 dcache_write_resp_valid;
     hpdcache_mem_resp_w_t dcache_write_resp;
 
-  //  Hardware memory prefetcher configuration
-    input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
-    input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
-    input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
-    output logic [               63:0]       hwpf_status_o,
+  // //  Hardware memory prefetcher configuration
+  //   input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
+  //   input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
+  //   output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
+  //   input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
+  //   input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
+  //   output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
+  //   input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
+  //   input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
+  //   output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
+  //   output logic [               63:0]       hwpf_status_o,
 
   hwpf_stride_wrapper #(
       .HPDcacheCfg          (HPDcacheCfg),
