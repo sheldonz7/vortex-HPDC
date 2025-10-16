@@ -165,13 +165,89 @@ module VX_hpdcache
     logic [NUM_REQS-1:0] flush_req_valid;
     wire dcache_flush = (| flush_req_valid); // one or more of the requesters issue a flush request
 
+    // one or more of the requesters issue a flush request
+    assign dcache_flush = | flush_req_valid;
     
     
-    logic dcache_read_miss, dcache_write_miss, dcache_refill_stall;
+    logic dcache_read_miss, dcache_write_miss;
+    logic dcache_refill_stall, dcache_stall;
     logic dcache_read_req, dcache_write_req;
 
 
+
+    // flush state machine
+    // 0: idle, 1: flush
+
+    // localparam FLUSH_IDLE  = 0;
+    // localparam FLUSH_BEGIN = 1;
+    // localparam FLUSH_WAIT  = 2;
+
+    // localparam FLUSH_RSP = 3;
+    // localparam FLUSH_DONE = 4;
+
+    // typedef enum logic [1:0] {
+    //     FLUSH_IDLE  = 2'b00,
+    //     FLUSH_BEGIN = 2'b01,
+    //     FLUSH_WAIT  = 2'b10,
+    //     FLUSH_DONE  = 2'b11
+    // } flush_state_t;
+
+    // // flush state machine
+    // reg flush_state, flush_state_n;
+
+    // always_comb begin
+    //     flush_state_n = flush_state;
+    //     case (flush_state)
+    //         FLUSH_IDLE: begin
+    //             if (dcache_flush) begin
+    //                 flush_state_n = FLUSH_BEGIN;
+    //             end 
+    //         end
+    //         FLUSH_BEGIN: begin
+    //             if (flush_req_valid[0]) begin // assume only one requester for now
+    //                 flush_state_n = FLUSH_WAIT;
+    //             end
+    //         end
+    //         FLUSH_WAIT: begin
+    //             if (!dcache_flush) begin
+    //                 flush_state_n = FLUSH_DONE;
+    //             end
+    //         end
+    //         FLUSH_DONE: begin
+    //             flush_state_n = FLUSH_IDLE;
+    //         end
+    //     endcase
+    // end
+
+
+    // always_ff @(posedge clk or negedge reset) begin
+    //     if (!reset) begin
+    //         flush_state <= FLUSH_IDLE;
+    //     end else begin
+    //         flush_state <= flush_state_n;
+    //     end
+    // end
+
+    // // output
+    // always_comb begin
     
+
+
+    // end
+
+
+
+    // always_ff @(posedge clk or negedge reset) begin
+    //     if (!reset) begin
+    //         flush_state <= 0;
+    //     end else begin
+    //         if (dcache_flush) begin
+    //             flush_state <= 1;
+    //         end else if (flush_state) begin
+    //             flush_state <= 0;
+    //         end
+    //     end
+    // end
 
 
     // VX_mem_bus_if #(
@@ -302,7 +378,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         reqSrcIdWidth: int'(`UP(`CS_REQ_SEL_BITS)),  // `CLOG2(NUM_REQS)
 
         // Cache organization
-        victimSel: (REPL_POLICY == `CS_REPL_PLRU) ? hpdcache_pkg::HPDCACHE_VICTIM_PLRU :  // hpdcache does not support cyclic
+        victimSel: (REPL_POLICY == `CS_REPL_PLRU) ? hpdcache_pkg::HPDCACHE_VICTIM_PLRU :
+                    (REPL_POLICY == `CS_REPL_CYCLIC) ? hpdcache_pkg::HPDCACHE_VICTIM_CYCLIC :
                                                     hpdcache_pkg::HPDCACHE_VICTIM_RANDOM,
 
         // Data RAM configuration
@@ -322,22 +399,27 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
         mshrSets: int'(1),
         mshrWays: int'(MSHR_SIZE),
         mshrWaysPerRamWord: int'(MSHR_SIZE),
-        mshrSetsPerRam: int'(1),
+        //mshrWaysPerRamWord: 4,
+        mshrSetsPerRam: int'(4),
         mshrRamByteEnable: bit'(1'b1),
         mshrUseRegbank: bit'(MSHR_SIZE < 16),
+        
+        cbufEntries: int'(4),
 
         // Core response handling
         refillCoreRspFeedthrough: bit'(1'b1),
-        refillFifoDepth: int'(2),
+        refillFifoDepth: int'(4),
 
         // Write buffer configuration
-        wbufDirEntries: int'(MREQ_SIZE),  // From Vortex MREQ_SIZE
-        wbufDataEntries: int'(MREQ_SIZE), 
+        //wbufDirEntries: int'(MREQ_SIZE),  // From Vortex MREQ_SIZE
+        //wbufDataEntries: int'(MREQ_SIZE), 
+        wbufDirEntries: int'(16),  // From Vortex MREQ_SIZE
+        wbufDataEntries: int'(8), 
         wbufWords: int'(`CS_LINE_WIDTH / WORD_WIDTH),   // mem bus width / core request word width, e.g., 512/256 = 2
         wbufTimecntWidth: int'(3),
 
         // Request tracking
-        rtabEntries: int'(4),
+        rtabEntries: int'(8),
 
         // Flush handling
         flushEntries: 8,
@@ -350,8 +432,9 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
 
         // Write policies
         wtEn: bit'(WRITE_ENABLE),  // From Vortex WRITE_ENABLE
-        wbEn: bit'(WRITEBACK)    // From Vortex WRITEBACK
+        wbEn: bit'(WRITEBACK),    // From Vortex WRITEBACK
 
+        lowLatency: bit'(1'b0)
     };
 
 
@@ -504,7 +587,8 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
             .LINE_SIZE            (LINE_SIZE),
             .NUM_BANKS            (NUM_BANKS),
             .NUM_WAYS             (NUM_WAYS),
-            .WORD_SIZE            (WORD_SIZE)
+            .WORD_SIZE            (WORD_SIZE),
+            .WRITEBACK            (WRITEBACK)
         ) i_vx_hpdcache_if_adapter (
             .clk(clk),
             .reset(reset),
@@ -528,6 +612,10 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     endgenerate
 
     // CMO request generation
+    
+    
+
+
 
 
 
@@ -682,7 +770,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
       .evt_req_on_hold_o     (  /* unused */),
       .evt_rtab_rollback_o   (  /* unused */),
       .evt_stall_refill_o    (dcache_refill_stall),
-      .evt_stall_o           (  /* unused */),
+      .evt_stall_o           (dcache_stall),
 
       .wbuf_empty_o(wbuffer_empty_o),
 
@@ -770,6 +858,10 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     // end
 
 `ifdef PERF_ENABLE
+    // track hit and miss latency
+    
+
+
     // per cycle: core_reads, core_writes
     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_reads_per_cycle;
     wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_writes_per_cycle;
@@ -832,9 +924,10 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
             perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
             perf_read_misses  <= perf_read_misses  + `PERF_CTR_BITS'(dcache_read_miss);
             perf_write_misses <= perf_write_misses + `PERF_CTR_BITS'(dcache_write_miss);
-            perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(dcache_refill_stall);
+            perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(dcache_stall);
             perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
             perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
+          //  perf_core_stalls  <= perf_core_stalls  + `PERF_CTR_BITS'(dcache_stall);
         end
     end
 
@@ -846,6 +939,7 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
     assign cache_perf.mshr_stalls  = perf_mshr_stalls;
     assign cache_perf.mem_stalls   = perf_mem_stalls;
     assign cache_perf.crsp_stalls  = perf_crsp_stalls;
+  //  assign cache_perf.core_stalls   = perf_core_stalls;
 `endif
 
 endmodule

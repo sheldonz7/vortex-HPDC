@@ -30,16 +30,8 @@ module VX_hpdcache_core_if_adapter
     // Size of a word in bytes
     parameter WORD_SIZE             = 16,
 
-    parameter WRITEBACK             = 0,
+    parameter WRITEBACK             = 0
 
-    // bypass
-    parameter PASSTHRU              = 0,
-
-    // uncacheable
-    parameter NC_ENABLE             = 0
-
-    // parameter type dcache_req_i_t = logic,
-    // parameter type dcache_req_o_t = logic
 ) (
     // Clock and Reset
     input wire clk,
@@ -105,7 +97,7 @@ module VX_hpdcache_core_if_adapter
 
 
     // flush operation detection
-    assign flush_op = vx_core_bus.req_data.flags[`MEM_REQ_FLAG_FLUSH] && vx_core_bus.req_valid;
+    assign flush_op = vx_core_bus.req_data.flags[`MEM_REQ_FLAG_FLUSH] && hpdcache_req_valid;
 
 
     // Request and Response Control Logic
@@ -117,10 +109,11 @@ module VX_hpdcache_core_if_adapter
     // assign core_req_ready     = hpdcache_req_ready && mshr_alloc_ready && ~bypass_request;
 
     assign vx_core_bus.req_ready = hpdcache_req_ready;
-    assign hpdcache_req_valid = vx_core_bus.req_valid;
+    assign hpdcache_req_valid = reset ? vx_core_bus.req_valid : 1'b0;
     assign hpdcache_req.addr_offset = byte_addr_no_tag;
     assign hpdcache_req.wdata = vx_core_bus.req_data.data;
-    assign hpdcache_req.op = flush_op ? (WRITEBACK ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL : hpdcache_pkg::HPDCACHE_REQ_CMO_INVAL_ALL) : (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
+    // assign hpdcache_req.op = flush_op ? (WRITEBACK ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL : hpdcache_pkg::HPDCACHE_REQ_CMO_INVAL_ALL) : (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
+    assign hpdcache_req.op = flush_op ? hpdcache_pkg::HPDCACHE_REQ_CMO_FLUSH_ALL : (vx_core_bus.req_data.rw ? hpdcache_pkg::HPDCACHE_REQ_STORE : hpdcache_pkg::HPDCACHE_REQ_LOAD);
     assign hpdcache_req.be = vx_core_bus.req_data.byteen;
     assign hpdcache_req.size = `CLOG2(WORD_SIZE)[2:0]; // always full word access
     assign hpdcache_req.sid = hpdcache_req_sid_i;
