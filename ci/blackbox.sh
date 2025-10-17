@@ -66,6 +66,7 @@ parse_args() {
             --warps=*)  CONFIGS=$(add_option "$CONFIGS" "-DNUM_WARPS=${i#*=}") ;;
             --threads=*) CONFIGS=$(add_option "$CONFIGS" "-DNUM_THREADS=${i#*=}") ;;
             --hpdcache)  CONFIGS=$(add_option "$CONFIGS" "-DENABLE_HPDCACHE") ;;
+            --vxcache)  ;;
             --l2cache)  CONFIGS=$(add_option "$CONFIGS" "-DL2_ENABLE") ;;
             --l3cache)  CONFIGS=$(add_option "$CONFIGS" "-DL3_ENABLE") ;;
             --l2hpdc)   CONFIGS=$(add_option "$CONFIGS" "-DL2_HPDC_ENABLE") ;;
