@@ -16,7 +16,8 @@
 
 module VX_hpdcache
     import VX_gpu_pkg::*;
-    import hpdcache_pkg::*; 
+    import hpdcache_pkg::*;
+    import fetchflare_pkg::*;
 #(
     parameter `STRING INSTANCE_ID   = "",
 
@@ -83,29 +84,19 @@ module VX_hpdcache
     VX_mem_bus_if.slave     core_bus_if [NUM_REQS],
     VX_mem_bus_if.master    mem_bus_if,
 
-`ifdef HWPF_ENABLE
-    //  Hardware memory prefetcher configuration
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
-    // TO_BE_COMPLETED - TO_BE_COMPLETED
-    output logic [               63:0]       hwpf_status_o
-`endif
+// `ifdef HWPF_ENABLE
+//     //  Hardware memory prefetcher configuration
+//     input  logic [NrHwPrefetchers-1:0]       hwpf_base_set_i,
+//     input  logic [NrHwPrefetchers-1:0][63:0] hwpf_base_i,
+//     output logic [NrHwPrefetchers-1:0][63:0] hwpf_base_o,
+//     input  logic [NrHwPrefetchers-1:0]       hwpf_param_set_i,
+//     input  logic [NrHwPrefetchers-1:0][63:0] hwpf_param_i,
+//     output logic [NrHwPrefetchers-1:0][63:0] hwpf_param_o,
+//     input  logic [NrHwPrefetchers-1:0]       hwpf_throttle_set_i,
+//     input  logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_i,
+//     output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
+//     output logic [               63:0]       hwpf_status_o
+// `endif
 );
 
     `STATIC_ASSERT(NUM_BANKS == (1 << `CLOG2(NUM_BANKS)), ("invalid parameter: number of banks must be power of 2"))
@@ -149,7 +140,9 @@ module VX_hpdcache
     localparam HPDC_REQ_WORD = WORD_WIDTH / HPDC_WORD_WIDTH;
     localparam HPDC_ACCESS_WORD = HPDC_CL_WORD;
 
-
+    // HPDC type definitions
+    typedef logic [HPDcacheCfg.nlineWidth-1:0] hpdcache_nline_t;
+    typedef logic [HPDcacheCfg.setWidth-1:0] hpdcache_set_t;
 
 // performance monitoring and tracking
 `ifdef PERF_ENABLE
@@ -449,19 +442,19 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
 
 `ifdef HWPF_ENABLE
     // hardware prefetcher
-    typedef logic [63:0] hwpf_stride_param_t;
+    // typedef logic [63:0] hwpf_stride_param_t;
 
 
-    logic                                   [                2:0] snoop_valid;
-    logic                                   [                2:0] snoop_abort;
-    hpdcache_req_offset_t                   [                2:0] snoop_addr_offset;
-    hpdcache_tag_t                          [                2:0] snoop_addr_tag;
-    logic                                   [                2:0] snoop_phys_indexed;
+    // logic                                   [                2:0] snoop_valid;
+    // logic                                   [                2:0] snoop_abort;
+    // hpdcache_req_offset_t                   [                2:0] snoop_addr_offset;
+    // hpdcache_tag_t                          [                2:0] snoop_addr_tag;
+    // logic                                   [                2:0] snoop_phys_indexed;
 
-    logic                                                         dcache_cmo_req_is_prefetch;
+    // logic                                                         dcache_cmo_req_is_prefetch;
 
-    hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_in;
-    hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_out;
+    // hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_in;
+    // hwpf_stride_pkg::hwpf_stride_throttle_t [NrHwPrefetchers-1:0] hwpf_throttle_out;
 
 
 
@@ -568,50 +561,142 @@ localparam int HPDCACHE_NREQUESTERS = 1;   //
   //   output logic [NrHwPrefetchers-1:0][63:0] hwpf_throttle_o,
   //   output logic [               63:0]       hwpf_status_o,
 
-  hwpf_stride_wrapper #(
-      .HPDcacheCfg          (HPDcacheCfg),
-      .NUM_HW_PREFETCH      (NrHwPrefetchers),
-      .NUM_SNOOP_PORTS      (3),
-      .hpdcache_tag_t       (hpdcache_tag_t),
-      .hpdcache_req_offset_t(hpdcache_req_offset_t),
-      .hpdcache_req_data_t  (hpdcache_req_data_t),
-      .hpdcache_req_be_t    (hpdcache_req_be_t),
-      .hpdcache_req_sid_t   (hpdcache_req_sid_t),
-      .hpdcache_req_tid_t   (hpdcache_req_tid_t),
-      .hpdcache_req_t       (hpdcache_req_t),
-      .hpdcache_rsp_t       (hpdcache_rsp_t)
-  ) i_hwpf_stride_wrapper (
-      .clk_i,
-      .rst_ni,
+//   hwpf_stride_wrapper #(
+//       .HPDcacheCfg          (HPDcacheCfg),
+//       .NUM_HW_PREFETCH      (NrHwPrefetchers),
+//       .NUM_SNOOP_PORTS      (3),
+//       .hpdcache_tag_t       (hpdcache_tag_t),
+//       .hpdcache_req_offset_t(hpdcache_req_offset_t),
+//       .hpdcache_req_data_t  (hpdcache_req_data_t),
+//       .hpdcache_req_be_t    (hpdcache_req_be_t),
+//       .hpdcache_req_sid_t   (hpdcache_req_sid_t),
+//       .hpdcache_req_tid_t   (hpdcache_req_tid_t),
+//       .hpdcache_req_t       (hpdcache_req_t),
+//       .hpdcache_rsp_t       (hpdcache_rsp_t)
+//   ) i_hwpf_stride_wrapper (
+//       .clk_i,
+//       .rst_ni,
 
-      .hwpf_stride_base_set_i    (hwpf_base_set_i),
-      .hwpf_stride_base_i        (hwpf_base_i),
-      .hwpf_stride_base_o        (hwpf_base_o),
-      .hwpf_stride_param_set_i   (hwpf_param_set_i),
-      .hwpf_stride_param_i       (hwpf_param_i),
-      .hwpf_stride_param_o       (hwpf_param_o),
-      .hwpf_stride_throttle_set_i(hwpf_throttle_set_i),
-      .hwpf_stride_throttle_i    (hwpf_throttle_in),
-      .hwpf_stride_throttle_o    (hwpf_throttle_out),
-      .hwpf_stride_status_o      (hwpf_status_o),
+//       .hwpf_stride_base_set_i    (hwpf_base_set_i),
+//       .hwpf_stride_base_i        (hwpf_base_i),
+//       .hwpf_stride_base_o        (hwpf_base_o),
+//       .hwpf_stride_param_set_i   (hwpf_param_set_i),
+//       .hwpf_stride_param_i       (hwpf_param_i),
+//       .hwpf_stride_param_o       (hwpf_param_o),
+//       .hwpf_stride_throttle_set_i(hwpf_throttle_set_i),
+//       .hwpf_stride_throttle_i    (hwpf_throttle_in),
+//       .hwpf_stride_throttle_o    (hwpf_throttle_out),
+//       .hwpf_stride_status_o      (hwpf_status_o),
 
-      .snoop_valid_i       (snoop_valid),
-      .snoop_abort_i       (snoop_abort),
-      .snoop_addr_offset_i (snoop_addr_offset),
-      .snoop_addr_tag_i    (snoop_addr_tag),
-      .snoop_phys_indexed_i(snoop_phys_indexed),
+//       .snoop_valid_i       (snoop_valid),
+//       .snoop_abort_i       (snoop_abort),
+//       .snoop_addr_offset_i (snoop_addr_offset),
+//       .snoop_addr_tag_i    (snoop_addr_tag),
+//       .snoop_phys_indexed_i(snoop_phys_indexed),
 
-      .hpdcache_req_sid_i(hpdcache_req_sid_t'(NUM_REQS)),
+//       .hpdcache_req_sid_i(hpdcache_req_sid_t'(NUM_REQS)),
 
-      .hpdcache_req_valid_o(dcache_req_valid[NUM_REQS]),
-      .hpdcache_req_ready_i(dcache_req_ready[NUM_REQS]),
-      .hpdcache_req_o      (dcache_req[NUM_REQS]),
-      .hpdcache_req_abort_o(dcache_req_abort[NUM_REQS]),
-      .hpdcache_req_tag_o  (dcache_req_tag[NUM_REQS]),
-      .hpdcache_req_pma_o  (dcache_req_pma[NUM_REQS]),
-      .hpdcache_rsp_valid_i(dcache_rsp_valid[NUM_REQS]),
-      .hpdcache_rsp_i      (dcache_rsp[NUM_REQS])
-  );
+//       .hpdcache_req_valid_o(dcache_req_valid[NUM_REQS]),
+//       .hpdcache_req_ready_i(dcache_req_ready[NUM_REQS]),
+//       .hpdcache_req_o      (dcache_req[NUM_REQS]),
+//       .hpdcache_req_abort_o(dcache_req_abort[NUM_REQS]),
+//       .hpdcache_req_tag_o  (dcache_req_tag[NUM_REQS]),
+//       .hpdcache_req_pma_o  (dcache_req_pma[NUM_REQS]),
+//       .hpdcache_rsp_valid_i(dcache_rsp_valid[NUM_REQS]),
+//       .hpdcache_rsp_i      (dcache_rsp[NUM_REQS])
+//   );
+
+
+
+
+
+
+    logic [12:0] hpdc_prefetcher_page_size_csr;
+    logic [15:0] hpdc_prefetcher_cachelines_csr;
+    logic [15:0]  hpdc_prefetcher_inflight_csr;
+    logic [15:0]  hpdc_prefetcher_wait_csr;
+    logic         prefetcher_csr_update_valid;
+
+    // combinational logic for prefetcher parameters
+    logic [12:0] hpdc_prefetcher_page_size;
+    logic [15:0] hpdc_prefetcher_cachelines;
+    logic [15:0] hpdc_prefetcher_inflight;
+    logic [15:0] hpdc_prefetcher_wait;
+
+    //page size of the main memory
+    assign hpdc_prefetcher_page_size   = MEM_PAGE_SIZE;
+    
+    // how many cachelines can prefetch run within the limit of current memory page
+    assign hpdc_prefetcher_cachelines   =  MEM_PAGE_SIZE / LINE_SIZE / 2;
+    
+    // limit of in-flight prefetch requests (that are not yet returned)
+    assign hpdc_prefetcher_inflight     =   MSHR_SIZE / 2;
+    
+    // number of cycles to wait between two prefetch requests
+    assign hpdc_prefetcher_wait         = 2;
+
+    
+
+
+
+    always @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            hpdc_prefetcher_page_size_csr    <= hpdc_prefetcher_page_size;
+            hpdc_prefetcher_cachelines_csr   <= hpdc_prefetcher_cachelines;
+            hpdc_prefetcher_inflight_csr     <= hpdc_prefetcher_inflight;
+            hpdc_prefetcher_wait_csr         <= hpdc_prefetcher_wait;
+            prefetcher_csr_update_valid      <= 1'b1;
+        end else begin
+            // CSR write logic can be added here
+            // compare the csr and input values, if different, update the csr and generate valid signal
+            prefetcher_csr_update_valid      <= (hpdc_prefetcher_page_size_csr    != hpdc_prefetcher_page_size)    ||
+                                                (hpdc_prefetcher_cachelines_csr   != hpdc_prefetcher_cachelines)   ||
+                                                (hpdc_prefetcher_inflight_csr     != hpdc_prefetcher_inflight)     ||
+                                                (hpdc_prefetcher_wait_csr         != hpdc_prefetcher_wait);
+            hpdc_prefetcher_page_size_csr    <= hpdc_prefetcher_page_size;
+            hpdc_prefetcher_cachelines_csr   <= hpdc_prefetcher_cachelines;
+            hpdc_prefetcher_inflight_csr     <= hpdc_prefetcher_inflight;
+            hpdc_prefetcher_wait_csr         <= hpdc_prefetcher_wait;
+        end
+    end
+
+
+    fetchflare_wrapper #(
+        .NUM_HW_PREFETCH(NrHwPrefetchers),
+        .NUM_SNOOP_PORTS(1),
+        .CACHE_LINE_BYTES(LINE_SIZE),
+        .hpdcache_tag_t       (hpdcache_tag_t),
+        .hpdcache_req_offset_t(hpdcache_req_offset_t),
+        .hpdcache_req_data_t  (hpdcache_req_data_t),
+        .hpdcache_req_be_t    (hpdcache_req_be_t),
+        .hpdcache_req_sid_t   (hpdcache_req_sid_t),
+        .hpdcache_req_tid_t   (hpdcache_req_tid_t),
+        .hpdcache_req_t       (hpdcache_req_t),
+        .hpdcache_rsp_t       (hpdcache_rsp_t),
+        .hpdcache_nline_t     (hpdcache_nline_t),
+        .hpdcache_set_t       (hpdcache_set_t)
+    ) i_fetchflare_wrapper (
+        .clk_i(clk),
+        .rst_ni(reset),
+        .hwpf_stride_base_o              (hwpf_base_o),
+        .hpdc_valid_i                    (),
+        .hpdc_prefetcher_cachelines_i    (),
+        .hpdc_prefetcher_inflight_i      (),
+        .hpdc_prefetcher_wait_i          (),
+        .hpdc_prefetcher_page_size_i     (MEM_PAGE_SIZE),
+
+        .snoop_valid_i  (dcache_req_valid[0]),
+        .snoop_addr_i   (dcache_req[0].addr),
+
+        .hpdcache_req_sid_i   (hpdcache_req_sid_t'(NUM_REQS)),
+
+        .hpdcache_req_valid_o (dcache_req_valid[NUM_REQS]),
+        .hpdcache_req_ready_i (dcache_req_ready[NUM_REQS]),
+        .hpdcache_req_o       (dcache_req[NUM_REQS]),
+        .hpdcache_rsp_valid_i (dcache_rsp_valid[NUM_REQS]),
+        .hpdcache_rsp_i       (dcache_rsp[NUM_REQS])
+    );
+
 
 
 

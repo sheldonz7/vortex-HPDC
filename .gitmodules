@@ -10,3 +10,6 @@
 [submodule "hw/rtl/cache/cv-hpdcache"]
 	path = hw/rtl/cache/cv-hpdcache
 	url = https://github.com/openhwgroup/cv-hpdcache.git
+[submodule "hw/rtl/cache/FetchFlare"]
+	path = hw/rtl/cache/FetchFlare
+	url = https://github.com/bsc-loca/FetchFlare.git
