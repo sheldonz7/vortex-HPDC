@@ -249,6 +249,8 @@ import VX_fpu_pkg::*;
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_MISS_W, read_data_ro_w, mem_perf_if.dcache.write_misses);
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_BANK_ST, read_data_ro_w, mem_perf_if.dcache.bank_stalls);
                         `CSR_READ_64(`VX_CSR_MPM_DCACHE_MSHR_ST, read_data_ro_w, mem_perf_if.dcache.mshr_stalls);
+                        `CSR_READ_64(`VX_CSR_MPM_DCACHE_CORE_ST, read_data_ro_w, mem_perf_if.dcache.core_stalls);
+                        `CSR_READ_64(`VX_CSR_MPM_DCACHE_WBUF_FULL, read_data_ro_w, mem_perf_if.dcache.wbuf_full);
                         // PERF: lmem
                         `CSR_READ_64(`VX_CSR_MPM_LMEM_READS, read_data_ro_w, mem_perf_if.lmem.reads);
                         `CSR_READ_64(`VX_CSR_MPM_LMEM_WRITES, read_data_ro_w, mem_perf_if.lmem.writes);
@@ -274,6 +276,20 @@ import VX_fpu_pkg::*;
                         default:;
                         endcase
                     end
+
+                    // `VX_DCR_MPM_CLASS_3: begin
+                    //     // PERF: dcache additional
+                    //     // `CSR_READ_64(`VX_CSR_MPM_DCACHE_CORE_ST, read_data_ro_w, mem_perf_if.dcache.core_stalls);
+                    //     case (read_addr)
+                    //     // PERF: dcache
+                    //     `CSR_READ_64(`VX_CSR_MPM_DCACHE_CORE_ST, read_data_ro_w, mem_perf_if.dcache.core_stalls);
+                    //     // PERF: l2cache
+                    //     //`CSR_READ_64(`VX_CSR_MPM_L2CACHE_CORE_ST, read_data_ro_w, mem_perf_if.l2cache.core_stalls);
+                    //     // PERF: l3cache
+                    //     //`CSR_READ_64(`VX_CSR_MPM_L3CACHE_CORE_ST, read_data_ro_w, mem_perf_if.l3cache.core_stalls);
+                    //     default:;
+                    //     endcase
+                    // end
                     default:;
                     endcase
                 `endif

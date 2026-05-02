@@ -55,12 +55,13 @@ SRCS = $(COMMON_DIR)/util.cpp $(COMMON_DIR)/mem.cpp $(COMMON_DIR)/rvfloats.cpp $
 SRCS += $(DPI_DIR)/util_dpi.cpp $(DPI_DIR)/float_dpi.cpp
 SRCS += $(SRC_DIR)/xrt.cpp $(SRC_DIR)/xrt_sim.cpp
 
-RTL_PKGS += $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv
+RTL_PKGS += $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv $(FETCHFLARE_DIR)/src/fetchflare_pkg.sv
 
 export HPDCACHE_DIR
+export FETCHFLARE_DIR
 
 HPDC_FILE = -f $(HPDCACHE_DIR)/rtl/hpdcache.Flist
-HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/hwpf_stride
+HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/hwpf_stride -I4$(FETCHFLARE_DIR)/src/
 
 
 FPU_INCLUDE = -I$(RTL_DIR)/fpu

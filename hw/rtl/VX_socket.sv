@@ -156,7 +156,9 @@ module VX_socket import VX_gpu_pkg::*; #(
         .NC_ENABLE      (1),
         .CORE_OUT_BUF   (3),
         .MEM_OUT_BUF    (2),
-        .ENABLE_HPDCACHE (`ENABLE_HPDCACHE)
+        .ENABLE_HPDCACHE(`L1_HPDC_ENABLED),
+        .NUM_HWPF       (`L1_NUM_HWPF),
+        .LOW_LAT        (`L1_LOW_LAT)
     ) dcache (
     `ifdef PERF_ENABLE
         .cache_perf     (mem_perf_tmp_if.dcache),

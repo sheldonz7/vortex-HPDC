@@ -30,12 +30,13 @@ DBG_TRACE_FLAGS += -DDBG_TRACE_GBAR
 DBG_FLAGS += -DDEBUG_LEVEL=$(DEBUG) -DVCD_OUTPUT $(DBG_TRACE_FLAGS)
 
 RTL_PKGS = $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv
-RTL_PKGS += $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv
+RTL_PKGS += $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv $(FETCHFLARE_DIR)/src/fetchflare_pkg.sv
 
 export HPDCACHE_DIR
+export FETCHFLARE_DIR
 
 HPDC_FILE = -f $(HPDCACHE_DIR)/rtl/hpdcache.Flist
-HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/src/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/common/macros/behav -I${HPDCACHE_DIR}/rtl/src/hwpf_stride
+HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/src/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/common/macros/behav -I${HPDCACHE_DIR}/rtl/src/hwpf_stride -I$(FETCHFLARE_DIR)/src/
 
 FPU_INCLUDE = -I$(RTL_DIR)/fpu
 ifneq (,$(findstring FPU_FPNEW,$(CONFIGS)))

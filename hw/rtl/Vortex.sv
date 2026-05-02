@@ -92,7 +92,8 @@ module Vortex import VX_gpu_pkg::*; (
         .MEM_OUT_BUF    (3),
         .NC_ENABLE      (1),
         .PASSTHRU       (!`L3_ENABLED),
-        .ENABLE_HPDCACHE (`L3_HPDC_ENABLED)
+        .ENABLE_HPDCACHE (`L3_HPDC_ENABLED),
+        .NUM_HWPF       (`L3_NUM_HWPF)
     ) l3cache (
         .clk            (clk),
         .reset          (l3_reset),

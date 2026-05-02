@@ -65,12 +65,16 @@ package VX_gpu_pkg;
     typedef struct packed {
         logic [`PERF_CTR_BITS-1:0] reads;
         logic [`PERF_CTR_BITS-1:0] writes;
+        logic [`PERF_CTR_BITS-1:0] prefetch_hits;
+        logic [`PERF_CTR_BITS-1:0] prefetches;
         logic [`PERF_CTR_BITS-1:0] read_misses;
         logic [`PERF_CTR_BITS-1:0] write_misses;
         logic [`PERF_CTR_BITS-1:0] bank_stalls;
         logic [`PERF_CTR_BITS-1:0] mshr_stalls;
         logic [`PERF_CTR_BITS-1:0] mem_stalls;
         logic [`PERF_CTR_BITS-1:0] crsp_stalls;
+        logic [`PERF_CTR_BITS-1:0] core_stalls;   // total stall for all core requests
+        logic [`PERF_CTR_BITS-1:0] wbuf_full;
     } cache_perf_t;
 
     typedef struct packed {

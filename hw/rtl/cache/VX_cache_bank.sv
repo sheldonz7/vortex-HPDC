@@ -77,6 +77,7 @@ module VX_cache_bank #(
     output wire perf_read_misses,
     output wire perf_write_misses,
     output wire perf_mshr_stalls,
+    output wire perf_stalls,
 `endif
 
     // Core Request
@@ -685,6 +686,7 @@ module VX_cache_bank #(
     assign perf_read_misses  = do_read_st1 && ~is_hit_st1;
     assign perf_write_misses = do_write_st1 && ~is_hit_st1;
     assign perf_mshr_stalls  = mshr_alm_full;
+    assign perf_stalls       = core_req_valid && ~core_req_ready;
 `endif
 
 `ifdef DBG_TRACE_CACHE

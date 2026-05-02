@@ -76,12 +76,16 @@
     `PERF_COUNTER_ADD (dst, src, bank_stalls, `PERF_CTR_BITS, count, (count > 1)) \
     `PERF_COUNTER_ADD (dst, src, mshr_stalls, `PERF_CTR_BITS, count, (count > 1)) \
     `PERF_COUNTER_ADD (dst, src, mem_stalls, `PERF_CTR_BITS, count, (count > 1)) \
-    `PERF_COUNTER_ADD (dst, src, crsp_stalls, `PERF_CTR_BITS, count, (count > 1))
+    `PERF_COUNTER_ADD (dst, src, crsp_stalls, `PERF_CTR_BITS, count, (count > 1)) \
+    `PERF_COUNTER_ADD (dst, src, core_stalls, `PERF_CTR_BITS, count, (count > 1)) \
+    `PERF_COUNTER_ADD (dst, src, wbuf_full, `PERF_CTR_BITS, count, (count > 1))
 
 ///////////////////////////////////////////////////////////////////////////////
 
 `define CS_REPL_RANDOM  0
 `define CS_REPL_CYCLIC  1
 `define CS_REPL_PLRU    2
+`define CS_REPL_CYCLIC2  3
+`define CS_REPL_RRIP    4
 
 `endif // VX_CACHE_DEFINE_VH

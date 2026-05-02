@@ -200,6 +200,7 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
   uint64_t l2cache_write_misses = 0;
   uint64_t l2cache_bank_stalls = 0;
   uint64_t l2cache_mshr_stalls = 0;
+  uint64_t l2cache_core_stalls = 0;
   // PERF: l3cache
   uint64_t l3cache_reads = 0;
   uint64_t l3cache_writes = 0;
@@ -207,6 +208,7 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
   uint64_t l3cache_write_misses = 0;
   uint64_t l3cache_bank_stalls = 0;
   uint64_t l3cache_mshr_stalls = 0;
+  uint64_t l3cache_core_stalls = 0;
   // PERF: memory
   uint64_t mem_reads = 0;
   uint64_t mem_writes = 0;
@@ -463,6 +465,7 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_MSHR_ST, core_id, &dcache_mshr_stalls), {
           return err;
         });
+        uint64_t dcache_stalls;
         int dcache_read_hit_ratio = calcRatio(dcache_read_misses, dcache_reads);
         int dcache_write_hit_ratio = calcRatio(dcache_write_misses, dcache_writes);
         int dcache_bank_utilization = calcAvgPercent(dcache_reads + dcache_writes, dcache_reads + dcache_writes + dcache_bank_stalls);
@@ -473,6 +476,45 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         fprintf(stream, "PERF: core%d: dcache write misses=%ld (hit ratio=%d%%)\n", core_id, dcache_write_misses, dcache_write_hit_ratio);
         fprintf(stream, "PERF: core%d: dcache bank stalls=%ld (utilization=%d%%)\n", core_id, dcache_bank_stalls, dcache_bank_utilization);
         fprintf(stream, "PERF: core%d: dcache mshr stalls=%ld (utilization=%d%%)\n", core_id, dcache_mshr_stalls, mshr_utilization);
+      
+     
+        // PERF: Dcache additional
+        uint64_t dcache_core_stalls;
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_CORE_ST, core_id, &dcache_core_stalls), {
+          return err;
+        });
+
+
+        fprintf(stream, "PERF: core%d: dcache core stalls=%ld\n", core_id, dcache_core_stalls);
+      
+        uint64_t dcache_wbuf_full;
+        CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_WBUF_FULL, core_id, &dcache_wbuf_full), {
+          return err;
+        });
+
+        fprintf(stream, "PERF: core%d: dcache write buffer full=%ld\n", core_id, dcache_wbuf_full);
+      
+
+      // if (l2cache_enable) {
+      //   // PERF: L2cache additional
+      //   uint64_t tmp;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_L2CACHE_CORE_ST, core_id, &tmp), {
+      //     return err;
+      //   });
+      //   l2cache_core_stalls += tmp;
+      // }
+
+      // if (l3cache_enable) {
+      //   // PERF: L3cache additional
+      //   uint64_t l3cache_core_stalls;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_L3CACHE_CORE_ST, core_id, &l3cache_core_stalls), {
+      //     return err;
+      //   });
+      //   l3cache_core_stalls += l3cache_core_stalls;
+      // }
+
+      
+      
       }
 
       if (l2cache_enable) {
@@ -548,6 +590,48 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
         });
       }
     } break;
+
+   // case VX_DCR_MPM_CLASS_3: {
+      // if (icache_enable) {
+      //   // PERF: Icache additional
+      //   uint64_t icache_core_stalls;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_CORE_ST, core_id, &icache_core_stalls), {
+      //     return err;
+      //   });
+      //   fprintf(stream, "PERF: core%d: dcache core stalls=%ld\n", core_id, icache_core_stalls);
+      // }
+
+
+      // if (dcache_enable) {
+      //   // PERF: Dcache additional
+      //   uint64_t dcache_core_stalls;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_DCACHE_CORE_ST, core_id, &dcache_core_stalls), {
+      //     return err;
+      //   });
+
+
+      //   fprintf(stream, "PERF: core%d: dcache core stalls=%ld\n", core_id, dcache_core_stalls);
+      // }
+
+      // if (l2cache_enable) {
+      //   // PERF: L2cache additional
+      //   uint64_t tmp;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_L2CACHE_CORE_ST, core_id, &tmp), {
+      //     return err;
+      //   });
+      //   l2cache_core_stalls += tmp;
+      // }
+
+      // if (l3cache_enable) {
+      //   // PERF: L3cache additional
+      //   uint64_t l3cache_core_stalls;
+      //   CHECK_ERR(vx_mpm_query(hdevice, VX_CSR_MPM_L3CACHE_CORE_ST, core_id, &l3cache_core_stalls), {
+      //     return err;
+      //   });
+      //   l3cache_core_stalls += l3cache_core_stalls;
+      // }
+
+    // } break;
     default:
       break;
     }
@@ -627,6 +711,12 @@ extern int vx_dump_perf(vx_device_h hdevice, FILE* stream) {
     fprintf(stream, "PERF: memory latency=%d cycles\n", mem_avg_lat);
     fprintf(stream, "PERF: memory bank port utilization=%d%%\n", memory_bank_port_utilization);
   } break;
+  // case VX_DCR_MPM_CLASS_3: {
+  //   // if (l2cache_enable) {
+  //   //   fprintf(stream, "PERF: l2cache core stalls=%ld\n", l2cache_core_stalls);
+  //   // }
+  // } break;
+
   default:
     break;
   }

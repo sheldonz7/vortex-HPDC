@@ -33,12 +33,6 @@
 `endif
 
 ///////////////////////////////////////////////////////////////////////////////
-`ifdef ENABLE_HPDCACHE
-    `define ENABLE_HPDCACHE   1
-`else
-    `define ENABLE_HPDCACHE   0
-`endif
-
 `ifndef EXT_M_DISABLE
 `define EXT_M_ENABLE
 `endif
@@ -147,10 +141,8 @@
     `define L2_HPDC_ENABLED   0
 `endif
 
-`ifdef L2_HWPF_ENABLE
-    `define L2_HWPF_ENABLED   1
-`else
-    `define L2_HWPF_ENABLED   0
+`ifndef L2_NUM_HWPF
+    `define L2_NUM_HWPF   0
 `endif
 
 
@@ -166,10 +158,8 @@
     `define L3_HPDC_ENABLED   0
 `endif
 
-`ifdef L3_HWPF_ENABLE
-    `define L3_HWPF_ENABLED   1
-`else
-    `define L3_HWPF_ENABLED   0
+`ifndef L3_NUM_HWPF
+    `define L3_NUM_HWPF   0
 `endif
 
 `ifdef L1_DISABLE
@@ -624,10 +614,14 @@
 `endif
 
 // HPDC enable
-`ifdef HPDCACHE_ENABLE
-    `define HPDCACHE_ENABLED 1
+`ifdef L1_HPDC_ENABLE
+    `define L1_HPDC_ENABLED 1
 `else
-    `define HPDCACHE_ENABLED 0
+    `define L1_HPDC_ENABLED 0
+`endif
+
+`ifndef L1_NUM_HWPF
+    `define L1_NUM_HWPF   0
 `endif
 
 // Number of Cache Units
@@ -653,6 +647,10 @@
 // Miss Handling Register Size
 `ifndef DCACHE_MSHR_SIZE
 `define DCACHE_MSHR_SIZE 16
+`endif
+
+`ifndef DCACHE_MSHR_SET
+`define DCACHE_MSHR_SET 1
 `endif
 
 // Memory Request Queue Size
@@ -683,6 +681,10 @@
 // Replacement Policy
 `ifndef DCACHE_REPL_POLICY
 `define DCACHE_REPL_POLICY 1
+`endif
+
+`ifndef L1_LOW_LAT
+`define L1_LOW_LAT 1
 `endif
 
 // LMEM Configurable Knobs ////////////////////////////////////////////////////
@@ -753,6 +755,10 @@
 // Replacement Policy
 `ifndef L2_REPL_POLICY
 `define L2_REPL_POLICY 1
+`endif
+
+`ifndef L2_LOW_LAT
+`define L2_LOW_LAT 1   // L2
 `endif
 
 // L3cache Configurable Knobs /////////////////////////////////////////////////

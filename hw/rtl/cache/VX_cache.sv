@@ -105,6 +105,7 @@ module VX_cache import VX_gpu_pkg::*; #(
     wire [NUM_BANKS-1:0] perf_read_miss_per_bank;
     wire [NUM_BANKS-1:0] perf_write_miss_per_bank;
     wire [NUM_BANKS-1:0] perf_mshr_stall_per_bank;
+    wire [NUM_BANKS-1:0] perf_stall_per_bank;
 `endif
 
     VX_mem_bus_if #(
@@ -412,6 +413,7 @@ module VX_cache import VX_gpu_pkg::*; #(
             .perf_read_misses   (perf_read_miss_per_bank[bank_id]),
             .perf_write_misses  (perf_write_miss_per_bank[bank_id]),
             .perf_mshr_stalls   (perf_mshr_stall_per_bank[bank_id]),
+            .perf_stalls        (perf_stall_per_bank[bank_id]),
         `endif
 
             // Core request
@@ -557,6 +559,7 @@ module VX_cache import VX_gpu_pkg::*; #(
     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
     wire [`CLOG2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
     wire [`CLOG2(NUM_REQS+1)-1:0] perf_crsp_stall_per_cycle;
+    wire [`CLOG2(NUM_REQS+1)-1:0] perf_core_stall_per_cycle;
 
     `BUFFER(perf_core_reads_per_req, core_req_valid & core_req_ready & ~core_req_rw);
     `BUFFER(perf_core_writes_per_req, core_req_valid & core_req_ready & core_req_rw);
@@ -566,6 +569,7 @@ module VX_cache import VX_gpu_pkg::*; #(
     `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
     `POP_COUNT(perf_write_miss_per_cycle, perf_write_miss_per_bank);
     `POP_COUNT(perf_mshr_stall_per_cycle, perf_mshr_stall_per_bank);
+    `POP_COUNT(perf_core_stall_per_cycle, perf_stall_per_bank);
 
     wire [NUM_REQS-1:0] perf_crsp_stall_per_req;
     for (genvar i = 0; i < NUM_REQS; ++i) begin : g_perf_crsp_stall_per_req
@@ -583,6 +587,7 @@ module VX_cache import VX_gpu_pkg::*; #(
     reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_mem_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
+    reg [`PERF_CTR_BITS-1:0] perf_core_stalls;
 
     always @(posedge clk) begin
         if (reset) begin
@@ -593,6 +598,7 @@ module VX_cache import VX_gpu_pkg::*; #(
             perf_mshr_stalls  <= '0;
             perf_mem_stalls   <= '0;
             perf_crsp_stalls  <= '0;
+            perf_core_stalls  <= '0;
         end else begin
             perf_core_reads   <= perf_core_reads   + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
             perf_core_writes  <= perf_core_writes  + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
@@ -601,6 +607,7 @@ module VX_cache import VX_gpu_pkg::*; #(
             perf_mshr_stalls  <= perf_mshr_stalls  + `PERF_CTR_BITS'(perf_mshr_stall_per_cycle);
             perf_mem_stalls   <= perf_mem_stalls   + `PERF_CTR_BITS'(perf_mem_stall_per_cycle);
             perf_crsp_stalls  <= perf_crsp_stalls  + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
+            perf_core_stalls  <= perf_core_stalls  + `PERF_CTR_BITS'(perf_core_stall_per_cycle);
         end
     end
 
@@ -612,6 +619,7 @@ module VX_cache import VX_gpu_pkg::*; #(
     assign cache_perf.mshr_stalls  = perf_mshr_stalls;
     assign cache_perf.mem_stalls   = perf_mem_stalls;
     assign cache_perf.crsp_stalls  = perf_crsp_stalls;
+    assign cache_perf.core_stalls  = perf_core_stalls;
 `endif
 
 endmodule

@@ -34,3 +34,4 @@ RISCV_SYSROOT ?= $(RISCV_TOOLCHAIN_PATH)/$(RISCV_PREFIX)
 THIRD_PARTY_DIR ?= $(VORTEX_HOME)/third_party
 
 HPDCACHE_DIR ?= $(VORTEX_HOME)/hw/rtl/cache/cv-hpdcache
+FETCHFLARE_DIR ?= $(VORTEX_HOME)/hw/rtl/cache/FetchFlare

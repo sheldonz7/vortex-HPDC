@@ -16,9 +16,10 @@ CXXFLAGS += -DXLEN_$(XLEN)
 
 
 export HPDCACHE_DIR
+export FETCHFLARE_DIR
 
 HPDC_FILE = -f $(HPDCACHE_DIR)/rtl/hpdcache.Flist
-HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/src/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/common/macros/behav -I${HPDCACHE_DIR}/rtl/src/hwpf_stride
+HPDC_INCLUDE = -I${HPDCACHE_DIR}/rtl/src/ -I${HPDCACHE_DIR}/rtl/include/ -I${HPDCACHE_DIR}/rtl/src/utils -I${HPDCACHE_DIR}/rtl/src/common -I${HPDCACHE_DIR}/rtl/src/common/macros/behav -I${HPDCACHE_DIR}/rtl/src/hwpf_stride -I$(FETCHFLARE_DIR)/src/
 
 LDFLAGS += -shared $(THIRD_PARTY_DIR)/softfloat/build/Linux-x86_64-GCC/softfloat.a
 LDFLAGS += -Wl,-rpath,$(THIRD_PARTY_DIR)/ramulator -L$(THIRD_PARTY_DIR)/ramulator -lramulator -pthread
@@ -63,7 +64,7 @@ SRCS += $(SRC_DIR)/fpga.cpp $(SRC_DIR)/opae_sim.cpp
 
 RTL_PKGS = $(AFU_DIR)/local_mem_cfg_pkg.sv $(AFU_DIR)/ccip/ccip_if_pkg.sv
 RTL_PKGS += $(RTL_DIR)/VX_gpu_pkg.sv $(RTL_DIR)/fpu/VX_fpu_pkg.sv
-RTL_PKGS += $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv
+RTL_PKGS += $(HPDCACHE_DIR)/rtl/src/hpdcache_pkg.sv $(FETCHFLARE_DIR)/src/fetchflare_pkg.sv
 
 FPU_INCLUDE = -I$(RTL_DIR)/fpu
 ifneq (,$(findstring FPU_FPNEW,$(CONFIGS)))

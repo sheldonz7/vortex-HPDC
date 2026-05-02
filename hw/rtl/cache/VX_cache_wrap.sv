@@ -37,6 +37,7 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
     parameter CRSQ_SIZE             = 4,
     // Miss Reserv Queue Knob
     parameter MSHR_SIZE             = 16,
+    parameter MSHR_SETS             = 1,
     // Memory Response Queue Size
     parameter MRSQ_SIZE             = 4,
     // Memory Request Queue Size
@@ -74,9 +75,11 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
 
     // Memory request output buffer
     parameter MEM_OUT_BUF           = 3,
-    /* verilator lint_off UNUSED */
-    parameter ENABLE_HPDCACHE       = 0
-    /* verilator lint_on UNUSED */
+
+    parameter ENABLE_HPDCACHE       = 0,
+    
+    parameter NUM_HWPF              = 0,
+    parameter LOW_LAT               = 0
  ) (
 
     input wire clk,
@@ -187,7 +190,9 @@ module VX_cache_wrap import VX_gpu_pkg::*; #(
             .TAG_WIDTH    (TAG_WIDTH),
             .FLAGS_WIDTH  (FLAGS_WIDTH),
             .CORE_OUT_BUF (NC_OR_BYPASS ? 1 : CORE_OUT_BUF),
-            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF)
+            .MEM_OUT_BUF  (NC_OR_BYPASS ? 1 : MEM_OUT_BUF),
+            .NUM_HWPF     (NUM_HWPF),
+            .LOW_LAT      (LOW_LAT)
         ) cache (
             .clk            (clk),
             .reset          (~reset),

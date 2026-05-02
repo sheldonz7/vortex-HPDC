@@ -165,6 +165,11 @@ module VX_hpdcache_core_if_adapter
     assign flush_op_o = flush_op;
 
 
+
+    // HPDcache assumes core can always accept responses when they are valid
+    // but Vortex may not be able to, so we need a buffer for responses
+    
+
 endmodule
 
 

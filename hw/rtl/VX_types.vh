@@ -35,6 +35,7 @@
 `define VX_DCR_MPM_CLASS_NONE           0
 `define VX_DCR_MPM_CLASS_CORE           1
 `define VX_DCR_MPM_CLASS_MEM            2
+`define VX_DCR_MPM_CLASS_3              3
 
 // User Floating-Point CSRs ///////////////////////////////////////////////////
 
@@ -147,18 +148,18 @@
 `define VX_CSR_MPM_L2CACHE_MSHR_ST      12'hB11     // MSHR stalls
 `define VX_CSR_MPM_L2CACHE_MSHR_ST_H    12'hB91
 // PERF: l3cache
-`define VX_CSR_MPM_L3CACHE_READS        12'hB12     // total reads
-`define VX_CSR_MPM_L3CACHE_READS_H      12'hB92
-`define VX_CSR_MPM_L3CACHE_WRITES       12'hB13     // total writes
-`define VX_CSR_MPM_L3CACHE_WRITES_H     12'hB93
-`define VX_CSR_MPM_L3CACHE_MISS_R       12'hB14     // read misses
-`define VX_CSR_MPM_L3CACHE_MISS_R_H     12'hB94
-`define VX_CSR_MPM_L3CACHE_MISS_W       12'hB15     // write misses
-`define VX_CSR_MPM_L3CACHE_MISS_W_H     12'hB95
-`define VX_CSR_MPM_L3CACHE_BANK_ST      12'hB16     // bank conflicts
-`define VX_CSR_MPM_L3CACHE_BANK_ST_H    12'hB96
-`define VX_CSR_MPM_L3CACHE_MSHR_ST      12'hB17     // MSHR stalls
-`define VX_CSR_MPM_L3CACHE_MSHR_ST_H    12'hB97
+`define VX_CSR_MPM_L3CACHE_READS        12'hB20     // total reads
+`define VX_CSR_MPM_L3CACHE_READS_H      12'hBA0
+`define VX_CSR_MPM_L3CACHE_WRITES       12'hB21     // total writes
+`define VX_CSR_MPM_L3CACHE_WRITES_H     12'hBA1
+`define VX_CSR_MPM_L3CACHE_MISS_R       12'hB22     // read misses
+`define VX_CSR_MPM_L3CACHE_MISS_R_H     12'hBA2
+`define VX_CSR_MPM_L3CACHE_MISS_W       12'hB23     // write misses
+`define VX_CSR_MPM_L3CACHE_MISS_W_H     12'hBA3
+`define VX_CSR_MPM_L3CACHE_BANK_ST      12'hB24     // bank conflicts
+`define VX_CSR_MPM_L3CACHE_BANK_ST_H    12'hBA4
+`define VX_CSR_MPM_L3CACHE_MSHR_ST      12'hB25     // MSHR stalls
+`define VX_CSR_MPM_L3CACHE_MSHR_ST_H    12'hBA5
 // PERF: memory
 `define VX_CSR_MPM_MEM_READS            12'hB18     // total reads
 `define VX_CSR_MPM_MEM_READS_H          12'hB98
@@ -180,6 +181,22 @@
 
 // Machine Performance-monitoring memory counters (class 3) ///////////////////
 // <Add your own counters: use addresses hB03..B1F, hB83..hB9F>
+// `define VX_CSR_MPM_DCACHE_CORE_ST       12'hB03
+// `define VX_CSR_MPM_DCACHE_CORE_ST_H     12'hB83
+// `define VX_CSR_MPM_L2CACHE_CORE_ST      12'hB04
+// `define VX_CSR_MPM_L2CACHE_CORE_ST_H    12'hB84
+// `define VX_CSR_MPM_L3CACHE_CORE_ST      12'hB05
+// `define VX_CSR_MPM_L3CACHE_CORE_ST_H    12'hB85
+
+`define VX_CSR_MPM_DCACHE_CORE_ST       12'hB1B
+`define VX_CSR_MPM_DCACHE_CORE_ST_H     12'hB9B
+`define VX_CSR_MPM_DCACHE_WBUF_FULL       12'hB1C
+`define VX_CSR_MPM_DCACHE_WBUF_FULL_H     12'hB9C
+// `define VX_CSR_MPM_L2CACHE_CORE_ST      12'hB21
+// `define VX_CSR_MPM_L2CACHE_CORE_ST_H    12'hBA1
+// `define VX_CSR_MPM_L3CACHE_CORE_ST      12'hB22
+// `define VX_CSR_MPM_L3CACHE_CORE_ST_H    12'hBA2
+
 
 // Machine Information Registers //////////////////////////////////////////////
 

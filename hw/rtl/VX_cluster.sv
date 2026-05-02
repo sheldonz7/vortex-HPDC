@@ -106,7 +106,9 @@ module VX_cluster import VX_gpu_pkg::*; #(
         .MEM_OUT_BUF    (3),
         .NC_ENABLE      (1),
         .PASSTHRU       (!`L2_ENABLED),
-        .ENABLE_HPDCACHE (`L2_HPDC_ENABLED)
+        .ENABLE_HPDCACHE (`L2_HPDC_ENABLED),
+        .NUM_HWPF       (`L2_NUM_HWPF),
+        .LOW_LAT        (`L2_LOW_LAT)
     ) l2cache (
         .clk            (clk),
         .reset          (l2_reset),
